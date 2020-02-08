@@ -13,4 +13,4 @@ array = np.array([
 g = Game(3,0,array,0.99,1000, 0.5)
 g.start_game()
 plt.plot(g.get_scores())
-plt.savefig('Evolution of scores during the game (1000 steps) .png')
+plt.savefig('Evolution of scores during the game 1 (1000 steps) .png')

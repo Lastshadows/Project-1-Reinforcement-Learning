@@ -53,6 +53,16 @@ class Agent:
         return
 
     """
+    makes the agent move from on tile according to a policy, and updates the
+    rewards grid. 
+    """
+    def policy(self):
+        self.move("RIGHT")
+        self.receive_reward()
+        self.grid.update_reward()
+
+
+    """
     the agent updates its own cumulated reward at the current time of the Game
     this score is updated by adding the relevant reward on the grid
     """
@@ -128,11 +138,6 @@ class Game:
         self.scores = np.zeros(steps)
         self.steps = steps
 
-    def policy(self):
-        self.agent.move("RIGHT")
-        self.agent.receive_reward()
-        self.grid.update_reward()
-
     """
     returns all the scores of the game (one for every step) under the form of a
     one dimensional table
@@ -141,9 +146,9 @@ class Game:
         return self.scores
 
     """
-    launches a game 
+    launches a game
     """
     def start_game(self):
         for i in range(self.steps):
             self.scores[i] = self.agent.get_score()
-            self.policy()
+            self.agent.policy()
