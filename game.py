@@ -54,7 +54,7 @@ class Agent:
 
     """
     makes the agent move from on tile according to a policy, and updates the
-    rewards grid. 
+    rewards grid.
     """
     def policy(self):
         self.move("RIGHT")
@@ -74,6 +74,12 @@ class Agent:
     """
     def get_score(self):
         return self.score
+
+    """
+    return the current position of the agent
+    """
+    def get_position(self):
+        return (self.position_x , self.position_y)
 
 
 """
@@ -136,6 +142,9 @@ class Game:
         self.grid = Grid(rewards,discount)
         self.agent = Agent(position_x,position_y,self.grid, randomFactor)
         self.scores = np.zeros(steps)
+        self.x_positions= np.zeros(steps)
+        self.y_positions = np.zeros(steps)
+        self.trajectory = []
         self.steps = steps
 
     """
@@ -150,5 +159,10 @@ class Game:
     """
     def start_game(self):
         for i in range(self.steps):
+
             self.scores[i] = self.agent.get_score()
+            self.x_positions[i], self.y_positions[i] =  self.agent.get_position()
             self.agent.policy()
+
+        # zip together the x and y vectors to have a general trajectory list
+        self.trajectory =  list(zip(self.x_positions, self.y_positions))

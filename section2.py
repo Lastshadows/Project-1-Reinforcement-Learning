@@ -10,7 +10,13 @@ array = np.array([
         [6, -9, 4, 19, -5],
         [-20, -17, -4, -3, 9]])
 
-g = Game(3,0,array,0.99,1000, 0.5)
-g.start_game()
-plt.plot(g.get_scores())
+steps = 1000
+discount =  0.99
+beta = 0.5
+game = Game(3,0,array,discount,steps, beta)
+game.start_game()
+plt.plot(game.get_scores())
 plt.savefig('Evolution of scores during the game 1 (1000 steps) .png')
+
+for i in range(steps):
+    print(game.trajectory[i])
