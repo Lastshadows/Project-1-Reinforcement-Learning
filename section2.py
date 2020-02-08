@@ -16,7 +16,7 @@ beta = 0.5
 game = Game(3,0,array,discount,steps, beta)
 game.start_game()
 plt.plot(game.get_scores())
-plt.savefig('Evolution of scores during the game 1 (1000 steps) .png')
+plt.savefig('Evolution of scores during the game (1000 steps) .png')
 
 for i in range(steps):
     print(game.trajectory[i])

@@ -10,22 +10,22 @@ class Agent:
 
     """
     Constructor.
-    'position_x' is the variable representing the line the agent is on
-    'position_y' is the variable representing the column the agent is on
+    'positionI' is the variable representing the line the agent is on
+    'positionJ' is the variable representing the column the agent is on
     'grid' is a reward map of the game and represent the g variable in the domain given
     on the project guidelines
     'randomFactor' is the beta variable given in the guidelines and is used for the stochastic
     factor when chosing an action.
 
     """
-    def __init__(self, position_x, position_y,grid, randomFactor):
-        self.position_x = position_x
-        self.position_y = position_y
+    def __init__(self, positionI, positionJ,grid, randomFactor):
+        self.positionI = positionI
+        self.positionJ = positionJ
         self.grid = grid
         self.score = 0
         self.randomFactor =  randomFactor
 
-        if self.grid.allowed_position(self.position_x,self.position_y)==False:
+        if self.grid.allowed_position(self.positionI,self.positionJ)==False:
             print("Bad initial position")
 
     """
@@ -35,20 +35,20 @@ class Agent:
     If the agent cannot move in the given position, it will simply stay still.
     """
     def move(self,direction):
-        x = self.position_x
-        y = self.position_y
+        i = self.positionI
+        j = self.positionJ
 
-        if direction == "UP" and self.grid.allowed_position(x-1,y)== True:
-            self.position_x = x-1
-        elif direction == "DOWN" and self.grid.allowed_position(x+1,y)== True:
-            self.position_x = x+1
-        elif direction == "RIGHT" and self.grid.allowed_position(x,y+1)== True:
-            self.position_y = y+1
-        elif direction == "LEFT" and self.grid.allowed_position(x,y-1)== True:
-            self.position_y = y-1
-        elif direction == "NONE" and self.grid.allowed_position(x,y)== True:
-            self.position_y = y
-            self.position_x = x
+        if direction == "UP" and self.grid.allowed_position(i-1,j)== True:
+            self.positionI = i-1
+        elif direction == "DOWN" and self.grid.allowed_position(i+1,j)== True:
+            self.positionI = i+1
+        elif direction == "RIGHT" and self.grid.allowed_position(i,j+1)== True:
+            self.positionJ = j+1
+        elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
+            self.positionJ = j-1
+        elif direction == "NONE" and self.grid.allowed_position(i,j)== True:
+            self.positionJ = j
+            self.positionI = i
 
         return
 
@@ -67,7 +67,7 @@ class Agent:
     this score is updated by adding the relevant reward on the grid
     """
     def receive_reward(self):
-        self.score = self.score + self.grid.get_reward(self.position_x,self.position_y)
+        self.score = self.score + self.grid.get_reward(self.positionI,self.positionJ)
 
     """
     return the current cumulated score of the agent
@@ -79,7 +79,7 @@ class Agent:
     return the current position of the agent
     """
     def get_position(self):
-        return (self.position_x , self.position_y)
+        return (self.positionI , self.positionJ)
 
 
 """
@@ -89,9 +89,9 @@ given time, and updates these based on the discount factor.
 """
 class Grid:
 
-    def __init__(self,rewards, discount_factor):
+    def __init__(self,rewards, discountFactor):
         self.rewards = rewards
-        self.discount = discount_factor
+        self.discount = discountFactor
 
     """
     updates the rewards at a given time across the board by multiplying it by
@@ -102,22 +102,22 @@ class Grid:
 
     """
     returns the current reward for a given position on the Grid
-    x is the rank if the desired position
-    y is the column if the desired position
+    i is the rank of the desired position
+    j is the column of the desired position
 
     """
-    def get_reward(self,x,y):
-        return self.rewards[x][y]
+    def get_reward(self,i,j):
+        return self.rewards[i][j]
 
     """
     checks if a position is legal or not.
-    x is the rank if the tested position
-    y is the column if the tested position
+    i is the rank if the tested position
+    j is the column if the tested position
     returns true if the position is legal, false otherwise
     """
-    def allowed_position(self,x,y):
-        size_x,size_y=self.rewards.shape
-        if x >= 0 and x<size_x and y >= 0 and y<size_y:
+    def allowed_position(self,i,j):
+        sizeI, sizeJ=self.rewards.shape
+        if i >= 0 and i<sizeI and j >= 0 and j<sizeJ:
             return True
         return False
 
@@ -129,8 +129,8 @@ It can also store the scores of each step of the game and return them
 class Game:
     """
     initialize a Game
-    'position_x' is the variable representing the line the agent is on
-    'position_y' is the variable representing the column the agent is on
+    'positionI' is the variable representing the line the agent is on
+    'positionJ' is the variable representing the column the agent is on
     'rewards' is a reward map of the game and represent the g variable in the domain given
     on the project guidelines
     'discount' is the discount factor
@@ -138,12 +138,12 @@ class Game:
     'randomFactor' is the probability that the agent fails to move and stays
     still instead
     """
-    def __init__(self,position_x,position_y,rewards,discount,steps, randomFactor):
+    def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor):
         self.grid = Grid(rewards,discount)
-        self.agent = Agent(position_x,position_y,self.grid, randomFactor)
+        self.agent = Agent(positionI,positionJ,self.grid, randomFactor)
         self.scores = np.zeros(steps)
-        self.x_positions= np.zeros(steps)
-        self.y_positions = np.zeros(steps)
+        self.iPositions= np.zeros(steps)
+        self.jPositions = np.zeros(steps)
         self.trajectory = []
         self.steps = steps
 
@@ -161,8 +161,8 @@ class Game:
         for i in range(self.steps):
 
             self.scores[i] = self.agent.get_score()
-            self.x_positions[i], self.y_positions[i] =  self.agent.get_position()
+            self.iPositions[i], self.jPositions[i] =  self.agent.get_position()
             self.agent.policy()
 
-        # zip together the x and y vectors to have a general trajectory list
-        self.trajectory =  list(zip(self.x_positions, self.y_positions))
+        # zip together the i and j vectors to have a general trajectory list
+        self.trajectory =  list(zip(self.iPositions, self.jPositions))
