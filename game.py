@@ -2,12 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Agent:
+    """
+    this is a test for git
+    """
     def __init__(self, position_x, position_y,grid, randomFactor):
         self.position_x = position_x
         self.position_y = position_y
         self.grid = grid
         self.score = 0
-        self.randomFactor =  randomFactor 
+        self.randomFactor =  randomFactor
 
         if self.grid.allowed_position(self.position_x,self.position_y)==False:
             print("Bad initial position")
