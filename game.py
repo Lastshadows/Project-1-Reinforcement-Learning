@@ -18,12 +18,13 @@ class Agent:
     factor when chosing an action.
 
     """
-    def __init__(self, positionI, positionJ,grid, randomFactor):
+    def __init__(self, positionI, positionJ,grid, randomFactor,policy):
         self.positionI = positionI
         self.positionJ = positionJ
         self.grid = grid
         self.score = 0
         self.randomFactor =  randomFactor
+        self.policyType = policy
 
         if self.grid.allowed_position(self.positionI,self.positionJ)==False:
             print("Bad initial position")
@@ -52,11 +53,35 @@ class Agent:
 
         return
 
+
+    def policy(self):
+        if self.policyType == 0:
+            return self.policy_right()
+        elif self.policyType == 1: 
+            return self.policy_rand()
+        else :
+            return 
+
+    def policy_rand(self):
+        seed = np.random.random_sample()
+        print(seed)
+        if seed >= 0.25:
+            self.move("RIGHT")
+        elif seed >= 0.5 :
+            self.move("LEFT")
+        elif seed >= 0.75:
+            self.move("UP")
+        else :
+            self.move("DOWN")
+
+        self.receive_reward()
+        self.grid.update_reward()
+
     """
     makes the agent move from on tile according to a policy, and updates the
     rewards grid.
     """
-    def policy(self):
+    def policy_right(self):
         self.move("RIGHT")
         self.receive_reward()
         self.grid.update_reward()
@@ -140,7 +165,7 @@ class Game:
     """
     def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor):
         self.grid = Grid(rewards,discount)
-        self.agent = Agent(positionI,positionJ,self.grid, randomFactor)
+        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,0)
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
