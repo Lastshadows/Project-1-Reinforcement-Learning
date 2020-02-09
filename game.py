@@ -64,7 +64,7 @@ class Agent:
 
     def policy_rand(self):
         seed = np.random.random_sample()
-        print(seed)
+        #print(seed)
         if seed >= 0.25:
             self.move("RIGHT")
         elif seed >= 0.5 :
