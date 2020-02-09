@@ -13,7 +13,7 @@ array = np.array([
 steps = 1000
 discount =  0.99
 beta = 0.5
-initalI = 3
+initialI = 3
 initialJ = 0
 
 game = Game(initialI,initialJ,array,discount,steps, beta)
