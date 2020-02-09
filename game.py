@@ -25,6 +25,8 @@ class Agent:
         self.score = 0
         self.randomFactor =  randomFactor
         self.policyType = policy
+        self.currMove = "NONE"
+        self.currReward = 0
 
         if self.grid.allowed_position(self.positionI,self.positionJ)==False:
             print("Bad initial position")
@@ -54,36 +56,42 @@ class Agent:
         return
 
 
+    # according to the set policy, return the corresponding policy
     def policy(self):
         if self.policyType == 0:
             return self.policy_right()
-        elif self.policyType == 1: 
+        elif self.policyType == 1:
             return self.policy_rand()
         else :
-            return 
+            return
 
+    # selects a random direction to move to and updates the rewards
     def policy_rand(self):
         seed = np.random.random_sample()
-        #print(seed)
-        if seed >= 0.25:
-            self.move("RIGHT")
-        elif seed >= 0.5 :
-            self.move("LEFT")
-        elif seed >= 0.75:
-            self.move("UP")
-        else :
-            self.move("DOWN")
 
+        if seed >= 0.25:
+            self.currMove = "RIGHT"
+        elif seed >= 0.5 :
+            self.currMove = "LEFT"
+        elif seed >= 0.75:
+            self.currMove = "UP"
+        else :
+            self.currMove = "DOWN"
+
+        self.move(self.currMove )
         self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
     """
-    makes the agent move from on tile according to a policy, and updates the
+    makes the agent move to the right, and updates the
     rewards grid.
     """
     def policy_right(self):
-        self.move("RIGHT")
+        self.currMove = "RIGHT"
+        self.move(self.currMove)
         self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
 
@@ -105,6 +113,14 @@ class Agent:
     """
     def get_position(self):
         return (self.positionI , self.positionJ)
+
+    # returns the last move done by the agent
+    def get_curr_move(self):
+        return self.currMove
+
+    # returns the last move done by the agent
+    def get_curr_reward(self):
+        return self.currReward
 
 
 """
@@ -169,6 +185,8 @@ class Game:
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
+        self.moves = []
+        self.rewards = []
         self.trajectory = []
         self.steps = steps
 
@@ -188,6 +206,10 @@ class Game:
             self.scores[i] = self.agent.get_score()
             self.iPositions[i], self.jPositions[i] =  self.agent.get_position()
             self.agent.policy()
+            self.moves.append(self.agent.get_curr_move())
+            self.rewards.append(self.agent.get_curr_reward())
 
         # zip together the i and j vectors to have a general trajectory list
         self.trajectory =  list(zip(self.iPositions, self.jPositions))
+        self.trajectory = list(zip(self.trajectory, self.moves))
+        self.trajectory = list(zip(self.trajectory, self.rewards))
