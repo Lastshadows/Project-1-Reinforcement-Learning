@@ -1,40 +1,68 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import sys
 
 from game import Game
 
-array = np.array([
-        [-3, 1, -5, 0, 19],
-        [6, 3, 8, 9, 10],
-        [5, -8, 4, 1, -8],
-        [6, -9, 4, 19, -5],
-        [-20, -17, -4, -3, 9]])
 
-steps = 1000
-discount =  0.99
-beta = 0.5
+if __name__ == '__main__':
+	array = np.array([
+	        [-3, 1, -5, 0, 19],
+	        [6, 3, 8, 9, 10],
+	        [5, -8, 4, 1, -8],
+	        [6, -9, 4, 19, -5],
+	        [-20, -17, -4, -3, 9]])
 
-size_x,size_y=array.shape
-vectorScores = np.zeros((size_x,steps))
+	size_x,size_y=array.shape
 
-initialI = 0
-initialJ = 0
+	parser = argparse.ArgumentParser(description='The default policy is RIGHT')
+	parser.add_argument("--policy",type = str,
+		help="chose a policy between always :  RIGHT LEFT UP DOWN \n or for random : RAND")
+	args = parser.parse_args()
 
-plt.figure(figsize=(20,10))
+	policy = "RIGHT"
+	if args.policy:
+		if args.policy=="LEFT" or args.policy=="RIGHT" :
+			policy = args.policy
+			size_y = 1
+		elif args.policy=="UP" or args.policy=="DOWN":
+			policy = args.policy
+			size_x = 1
+		elif args.policy == "RAND":
+			policy = args.policy
+		else : 
+			print("UNKNOWN policy: "+args.policy)
+			print("TRY : RIGHT - LEFT - UP - DOWN - RAND")
+			sys.exit(0)
 
-legend = []
+	steps = 1000
+	discount =  0.99
+	beta = 0.5
 
-print('The chosen policy is always move RIGHT')
+	vectorScores = np.zeros((size_x,steps))
 
-for i in range(size_x):
-	game = Game(initialI,initialJ,array,discount,steps, beta)
-	game.start_game()
-	vectorScores[i][:] = game.get_scores()
-	plt.plot(vectorScores[i])
-	print(' The expected return for the'+ str(i+1)+' row : ' + str(game.scores[steps - 1]))
-	legend.append("row "+str(i+1))
-	initialI = initialI + 1 
+	initialI = 0
+	initialJ = 0
 
-plt.legend(legend)
-plt.title('Evolution of scores during the game (1000 steps) for the different initial positions using the always right policy')
-plt.savefig('Evolution of scores during the game (1000 steps) for the different initial positions.png')
+	plt.figure(figsize=(20,10))
+
+	legend = []
+
+	for i in range(size_x):
+		for j in range(size_y):
+			game = Game(initialI,initialJ,array,discount,steps, beta,policy)
+			game.start_game()
+			vectorScores[i][:] = game.get_scores()
+			plt.plot(vectorScores[i])
+			print(' The expected return for the row '+ str(i+1)+' and column '+str(j+1)+' : ' + str(game.scores[steps - 1]))
+			legend.append("row "+str(i+1) + " column " + str(j+1))
+			initialJ = initialJ + 1 
+
+		initialJ = 0
+		initialI = initialI + 1 
+
+
+	plt.legend(legend)
+	plt.title('Evolution of scores during the game (1000 steps) for the different initial positions using the '+policy+' policy')
+	plt.savefig('Evolution of scores during the game (1000 steps) for the different initial positions.png')
