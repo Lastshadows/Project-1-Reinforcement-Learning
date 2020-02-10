@@ -20,8 +20,8 @@ initialJ = 0
 game = Game(initialI,initialJ,array,discount,steps, beta, "RAND")
 game.start_game()
 
-rewards =  game.rewardFromStateAndAction
-stateToState = game.state2FromState1AndAction
+rewards =  game.rewardFromStateAndAction # r_x_u
+stateToState = game.state2FromState1AndAction # x' x u 
 
 for i in stateToState:
     print(i)

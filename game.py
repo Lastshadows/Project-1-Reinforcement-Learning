@@ -154,7 +154,7 @@ class Agent:
     rewards grid.
     """
     def policy_down(self):
-        
+
         self.currMove = "DOWN"
         self.move(self.currMove)
         self.receive_reward()
@@ -257,11 +257,13 @@ class Game:
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
+
         self.moves = []
         self.rewards = []
         self.trajectory = []
         self.rewardFromStateAndAction = []
         self.state2FromState1AndAction = []
+        
         self.steps = steps
 
     def policy_definition(self, direction):
