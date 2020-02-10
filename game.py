@@ -40,6 +40,24 @@ class Agent:
             print("Bad initial position")
 
     """
+    Updates agents state and grid after one move
+    """
+    def update_agent(self):
+        # computation of r(x,u)
+        i, j = self.positionI,self.positionJ
+        self.move(self.currMove)
+        unalteredReward = self.grid.get_unchanged_reward(i,j)
+        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
+
+        # saving data for computation of p(x'|x,u)
+        i2,j2 =  self.positionI,self.positionJ
+        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
+
+        self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
+        self.grid.update_reward()
+
+    """
     makes the agent move in a given direction.
     "UP", "DOWN", "LEFT", "RIGHT" and "NONE" are the only possible directions
     they make the agent move in the corresponding direction on the board.
@@ -62,7 +80,6 @@ class Agent:
             self.positionI = i
 
         return
-
 
     # according to the set policy, return the corresponding policy
     def policy(self):
@@ -90,53 +107,20 @@ class Agent:
             self.currMove = "UP"
         else :
             self.currMove = "DOWN"
-
-        # computation of r(x,u)
-        i, j = self.positionI,self.positionJ
-        self.move(self.currMove)
-        unalteredReward = self.grid.get_unchanged_reward(i,j)
-        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
-
-        # saving data for computation of p(x'|x,u)
-        i2,j2 =  self.positionI,self.positionJ
-        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
-
-        self.receive_reward()
-        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
-        self.grid.update_reward()
-
+        self.update_agent()
 
     #makes the agent move to the right, and updates the
     #rewards grid.
     def policy_right(self):
-
         self.currMove = "RIGHT"
-
-        # computation of r(x,u)
-        i, j = self.positionI,self.positionJ
-        self.move(self.currMove)
-        unalteredReward = self.grid.get_unchanged_reward(i,j)
-        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
-
-        #saving data for computation of p(x'|x,u)
-        i2,j2 =  self.positionI,self.positionJ
-        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
-
-        # update of the agent position, the cumulated score and the reward grid
-        self.receive_reward()
-        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
-        self.grid.update_reward()
-
+        self.update_agent()
     """
     makes the agent move to the left, and updates the
     rewards grid.
     """
     def policy_left(self):
         self.currMove = "LEFT"
-        self.move(self.currMove)
-        self.receive_reward()
-        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
-        self.grid.update_reward()
+        self.update_agent()
 
     """
     makes the agent move to the up, and updates the
@@ -144,22 +128,15 @@ class Agent:
     """
     def policy_up(self):
         self.currMove = "UP"
-        self.move(self.currMove)
-        self.receive_reward()
-        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
-        self.grid.update_reward()
+        self.update_agent()
 
     """
     makes the agent move to the down, and updates the
     rewards grid.
     """
     def policy_down(self):
-
         self.currMove = "DOWN"
-        self.move(self.currMove)
-        self.receive_reward()
-        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
-        self.grid.update_reward()
+        self.update_agent()
 
 
     # the agent updates its own cumulated reward at the current time of the Game
@@ -310,3 +287,8 @@ class Game:
         self.trajectory =  list(zip(self.iPositions, self.jPositions))
         self.trajectory = list(zip(self.trajectory, self.moves))
         self.trajectory = list(zip(self.trajectory, self.rewards))
+
+    """
+    """
+    def stats(self):
+

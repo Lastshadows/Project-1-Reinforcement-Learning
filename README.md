@@ -8,6 +8,5 @@
 que les débuts de rangs ?
 * j'ai collectionné tous les tuples (r,x,u) pour la section 4. 1 par step. J'en fait quoi mnt ?
 * intégrer la possibilité d'utiliser les dynamiques déterministes et stochastiques quand on lance une policy
-* update_agent() pour remplacer les copiés collés qui servent pour les stats de section 5 dans les différents policy_up
-* généraliser update_agent à toutes les policy
 * beta en argument commande
+* Section 4 -> Bardhyl
