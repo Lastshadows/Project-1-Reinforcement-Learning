@@ -1,4 +1,4 @@
-import numpy as np
+ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import sys
@@ -16,7 +16,7 @@ if __name__ == '__main__':
 	if args.policy:
 		if args.policy=="LEFT" or args.policy=="RIGHT" or args.policy=="UP" or args.policy=="DOWN" or args.policy =="RAND":
 			policy = args.policy
-		else : 
+		else :
 			print("UNKNOWN policy: "+args.policy)
 			print("TRY : RIGHT - LEFT - UP - DOWN - RAND")
 			sys.exit(0)
