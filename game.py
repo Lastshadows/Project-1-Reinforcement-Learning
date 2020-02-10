@@ -67,36 +67,30 @@ class Agent:
     # according to the set policy, return the corresponding policy
     def policy(self):
         if self.policyType == 0:
-            return self.policy_right()
-        elif self.policyType == 1:
             return self.policy_rand()
+        elif self.policyType == 1:
+            return self.policy_right()
+        elif self.policyType == 2:
+            return self.policy_left()
+        elif self.policyType == 3:
+            return self.policy_up()
+        elif self.policyType == 4:
+            return self.policy_down()
         else :
             return
 
     # selects a random direction to move to and updates the rewards
     def policy_rand(self):
-        seed = np.random.random_sample()
-
-        if seed >= 0.25 and seed < 0.5:
+        seed = np.random.rand()
+        if seed <= 0.25:
             self.currMove = "RIGHT"
-        elif seed >= 0.5 and seed < 0.75:
+        elif seed <= 0.5 :
             self.currMove = "LEFT"
-        elif seed >= 0.75:
+        elif seed <= 0.75:
             self.currMove = "UP"
         else :
             self.currMove = "DOWN"
-
-        # computation of r(x,u) and update of the position
-        i, j = self.positionI,self.positionJ
-        self.move(self.currMove )
-        unalteredReward = self.initialGrid[i][j]
-        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
-
-        #saving data for computation of p(x'|x,u)
-        i2,j2 =  self.positionI,self.positionJ
-        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
-
-        # update of the agent position, the cumulated score and the reward grid
+        self.move(self.currMove)
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
@@ -123,6 +117,38 @@ class Agent:
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
+    """
+    makes the agent move to the left, and updates the
+    rewards grid.
+    """
+    def policy_left(self):
+        self.currMove = "LEFT"
+        self.move(self.currMove)
+        self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
+        self.grid.update_reward()
+
+    """
+    makes the agent move to the up, and updates the
+    rewards grid.
+    """
+    def policy_up(self):
+        self.currMove = "UP"
+        self.move(self.currMove)
+        self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
+        self.grid.update_reward()
+
+    """
+    makes the agent move to the down, and updates the
+    rewards grid.
+    """
+    def policy_down(self):
+        self.currMove = "DOWN"
+        self.move(self.currMove)
+        self.receive_reward()
+        self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
+        self.grid.update_reward()
 
 
     # the agent updates its own cumulated reward at the current time of the Game
@@ -209,9 +235,10 @@ class Game:
     'randomFactor' is the probability that the agent fails to move and stays
     still instead
     """
-    def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor):
+    def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor,policy):
         self.grid = Grid(rewards,discount)
-        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,1, rewards)
+        policyType = self.policy_definition(policy)
+        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,policyType)
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
@@ -221,6 +248,22 @@ class Game:
         self.rewardFromStateAndAction = []
         self.state2FromState1AndAction = []
         self.steps = steps
+
+    def policy_definition(self, direction):
+        policyType = -1
+        if direction == "RAND":
+            policyType = 0
+        elif direction == "RIGHT":
+            policyType = 1
+        elif direction == "LEFT":
+            policyType = 2
+        elif direction == "UP":
+            policyType = 3
+        elif direction == "DOWN":
+            policyType = 4
+        else:
+            print("error unknown direction: "+direction)
+        return policyType
 
     """
     returns all the scores of the game (one for every step) under the form of a
