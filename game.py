@@ -18,15 +18,23 @@ class Agent:
     factor when chosing an action.
 
     """
-    def __init__(self, positionI, positionJ,grid, randomFactor,policy):
+    def __init__(self, positionI, positionJ,grid, randomFactor,policy, rewards ):
+
         self.positionI = positionI
         self.positionJ = positionJ
+
         self.grid = grid
+        self.initialGrid = rewards
+
         self.score = 0
         self.randomFactor =  randomFactor
         self.policyType = policy
+
         self.currMove = "NONE"
         self.currReward = 0
+        # first element is the reward, second is a tuple represetning the state and the action that lead to the reward
+        self.rewardFromStateAndAction = ()
+        self.state2FromState1AndAction = ()
 
         if self.grid.allowed_position(self.positionI,self.positionJ)==False:
             print("Bad initial position")
@@ -69,48 +77,66 @@ class Agent:
     def policy_rand(self):
         seed = np.random.random_sample()
 
-        if seed >= 0.25:
+        if seed >= 0.25 and seed < 0.5:
             self.currMove = "RIGHT"
-        elif seed >= 0.5 :
+        elif seed >= 0.5 and seed < 0.75:
             self.currMove = "LEFT"
         elif seed >= 0.75:
             self.currMove = "UP"
         else :
             self.currMove = "DOWN"
 
+        # computation of r(x,u) and update of the position
+        i, j = self.positionI,self.positionJ
         self.move(self.currMove )
+        unalteredReward = self.initialGrid[i][j]
+        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
+
+        #saving data for computation of p(x'|x,u)
+        i2,j2 =  self.positionI,self.positionJ
+        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
+
+        # update of the agent position, the cumulated score and the reward grid
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
-    """
-    makes the agent move to the right, and updates the
-    rewards grid.
-    """
+
+    #makes the agent move to the right, and updates the
+    #rewards grid.
     def policy_right(self):
+
         self.currMove = "RIGHT"
+
+        # computation of r(x,u)
+        i, j = self.positionI,self.positionJ
         self.move(self.currMove)
+        unalteredReward = self.initialGrid[i][j]
+        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
+
+        #saving data for computation of p(x'|x,u)
+        i2,j2 =  self.positionI,self.positionJ
+        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
+
+        # update of the agent position, the cumulated score and the reward grid
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
 
-    """
-    the agent updates its own cumulated reward at the current time of the Game
-    this score is updated by adding the relevant reward on the grid
-    """
+
+    # the agent updates its own cumulated reward at the current time of the Game
+    # this score is updated by adding the relevant reward on the grid
     def receive_reward(self):
         self.score = self.score + self.grid.get_reward(self.positionI,self.positionJ)
 
-    """
-    return the current cumulated score of the agent
-    """
+
+    # return the current cumulated score of the agent
     def get_score(self):
         return self.score
 
-    """
-    return the current position of the agent
-    """
+
+    # return the current position of the agent
     def get_position(self):
         return (self.positionI , self.positionJ)
 
@@ -122,6 +148,10 @@ class Agent:
     def get_curr_reward(self):
         return self.currReward
 
+    # returns the initial reward the agent gets for doing action u from state x .
+    # discount factor is not accounted for
+    def get_r_x_u(self):
+        return self.rewardFromStateAndAction
 
 """
 This class represents the grid the agent evolves through. It has all the
@@ -181,13 +211,15 @@ class Game:
     """
     def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor):
         self.grid = Grid(rewards,discount)
-        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,0)
+        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,1, rewards)
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
         self.moves = []
         self.rewards = []
         self.trajectory = []
+        self.rewardFromStateAndAction = []
+        self.state2FromState1AndAction = []
         self.steps = steps
 
     """
@@ -205,9 +237,14 @@ class Game:
 
             self.scores[i] = self.agent.get_score()
             self.iPositions[i], self.jPositions[i] =  self.agent.get_position()
+
             self.agent.policy()
+
             self.moves.append(self.agent.get_curr_move())
             self.rewards.append(self.agent.get_curr_reward())
+
+            self.rewardFromStateAndAction.append(self.agent.rewardFromStateAndAction)
+            self.state2FromState1AndAction.append(self.agent.state2FromState1AndAction)
 
         # zip together the i and j vectors to have a general trajectory list
         self.trajectory =  list(zip(self.iPositions, self.jPositions))
