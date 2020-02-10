@@ -10,7 +10,7 @@ array = np.array([
         [6, -9, 4, 19, -5],
         [-20, -17, -4, -3, 9]])
 
-steps = 1000
+steps = 100
 discount =  0.99
 beta = 0.5
 
@@ -21,7 +21,7 @@ game = Game(initialI,initialJ,array,discount,steps, beta, "RAND")
 game.start_game()
 
 rewards =  game.rewardFromStateAndAction # r_x_u
-stateToState = game.state2FromState1AndAction # x' x u 
+stateToState = game.state2FromState1AndAction # x' x u
 
 for i in stateToState:
     print(i)
@@ -33,7 +33,24 @@ for i in stateToState:
 # couple appeared
 # from there we can infer p(x'|x,u)
 
-ssa = {} # state state action = ssa
-for sts in stateToState:
-    if sts in ssa: # if the element already existed
-        print(" oh quel belle opération !")
+# first dict
+s_s_a = {} # state state action = s_s_a
+for s_t_s in stateToState:
+
+    if s_t_s in s_s_a: # if the element already existed, increment the counter
+        s_s_a[s_t_s] += 1
+        
+    else: # if first time we encounter the (x' x u) we add it to the dict and initialize counter to 1
+        s_s_a[s_t_s] = 1
+
+# second dict
+s_a = {} # state action
+for s_t_s in stateToState:
+    xprime, x, u = stateToState
+    x_u = (x,u)
+
+    if x_u in s_a: # if the element already existed, increment the counter
+        s_a[x_u] += 1
+
+    else: # if first time we encounter the (x' x u) we add it to the dict and initialize counter to 1
+        s_a[x_u] = 1

@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 """
 The agent class represents the artificial autonomous intelligent agent. It
@@ -14,11 +15,11 @@ class Agent:
     'positionJ' is the variable representing the column the agent is on
     'grid' is a reward map of the game and represent the g variable in the domain given
     on the project guidelines
-    'randomFactor' is the beta variable given in the guidelines and is used for the stochastic
+    'beta' is the beta variable given in the guidelines and is used for the stochastic
     factor when chosing an action.
 
     """
-    def __init__(self, positionI, positionJ,grid, randomFactor,policy ):
+    def __init__(self, positionI, positionJ,grid, beta,policy ):
 
         self.positionI = positionI
         self.positionJ = positionJ
@@ -27,14 +28,14 @@ class Agent:
         self.initialGrid = grid.unchangedRewards
 
         self.score = 0
-        self.randomFactor =  randomFactor
+        self.beta =  beta
         self.policyType = policy
 
         self.currMove = "NONE"
         self.currReward = 0
         # first element is the reward, second is a tuple represetning the state and the action that lead to the reward
-        self.rewardFromStateAndAction = ()
-        self.state2FromState1AndAction = ()
+        self.rewardFromStateAndAction = () # r_x_u
+        self.state2FromState1AndAction = ()#  x' x u
 
         if self.grid.allowed_position(self.positionI,self.positionJ)==False:
             print("Bad initial position")
@@ -53,6 +54,7 @@ class Agent:
         i2,j2 =  self.positionI,self.positionJ
         self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
 
+        # updating remaining data
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
@@ -64,8 +66,14 @@ class Agent:
     If the agent cannot move in the given position, it will simply stay still.
     """
     def move(self,direction):
+
+        rand = random.uniform(0, 1)
         i = self.positionI
         j = self.positionJ
+
+        # if unlucky, nothing moves
+        if(self.beta < rand):
+            direction = "NONE"
 
         if direction == "UP" and self.grid.allowed_position(i-1,j)== True:
             self.positionI = i-1
@@ -224,13 +232,13 @@ class Game:
     on the project guidelines
     'discount' is the discount factor
     'steps' is the amount of turn a game takes to end
-    'randomFactor' is the probability that the agent fails to move and stays
+    'beta' is the probability that the agent fails to move and stays
     still instead
     """
-    def __init__(self,positionI,positionJ,rewards,discount,steps, randomFactor,policy):
+    def __init__(self,positionI,positionJ,rewards,discount,steps, beta,policy):
         self.grid = Grid(rewards,discount)
         policyType = self.policy_definition(policy)
-        self.agent = Agent(positionI,positionJ,self.grid, randomFactor,policyType)
+        self.agent = Agent(positionI,positionJ,self.grid, beta,policyType)
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
@@ -240,7 +248,7 @@ class Game:
         self.trajectory = []
         self.rewardFromStateAndAction = []
         self.state2FromState1AndAction = []
-        
+
         self.steps = steps
 
     def policy_definition(self, direction):
@@ -259,16 +267,14 @@ class Game:
             print("error unknown direction: "+direction)
         return policyType
 
-    """
-    returns all the scores of the game (one for every step) under the form of a
-    one dimensional table
-    """
+
+    # returns all the scores of the game (one for every step) under the form of a
+    # one dimensional table
     def get_scores(self):
         return self.scores
 
-    """
-    launches a game
-    """
+
+    # launches a game
     def start_game(self):
         for i in range(self.steps):
 
@@ -283,12 +289,8 @@ class Game:
             self.rewardFromStateAndAction.append(self.agent.rewardFromStateAndAction)
             self.state2FromState1AndAction.append(self.agent.state2FromState1AndAction)
 
-        # zip together the i and j vectors to have a general trajectory list
+        # zip together all the elements vectors that together make up a trajectory into
+        # the trajectory list
         self.trajectory =  list(zip(self.iPositions, self.jPositions))
         self.trajectory = list(zip(self.trajectory, self.moves))
         self.trajectory = list(zip(self.trajectory, self.rewards))
-
-    """
-    """
-    def stats(self):
-
