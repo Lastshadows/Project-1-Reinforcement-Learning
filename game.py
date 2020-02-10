@@ -61,7 +61,7 @@ class Agent:
 
     """
     makes the agent move in a given direction.
-    "UP", "DOWN", "LEFT", "RIGHT" and "NONE" are the only possible directions
+    "UP", "DOWN", "LEFT", "RIGHT" and "RESET" are the only possible directions
     they make the agent move in the corresponding direction on the board.
     If the agent cannot move in the given position, it will simply stay still.
     """
@@ -72,8 +72,8 @@ class Agent:
         j = self.positionJ
 
         # if unlucky, nothing moves
-        if(self.beta < rand):
-            direction = "NONE"
+        if rand > (1-self.beta):
+            direction = "RESET"
 
         if direction == "UP" and self.grid.allowed_position(i-1,j)== True:
             self.positionI = i-1
@@ -83,9 +83,9 @@ class Agent:
             self.positionJ = j+1
         elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
             self.positionJ = j-1
-        elif direction == "NONE" and self.grid.allowed_position(i,j)== True:
-            self.positionJ = j
-            self.positionI = i
+        elif direction == "RESET" and self.grid.allowed_position(i,j)== True:
+            self.positionJ = 0
+            self.positionI = 0
 
         return
 
@@ -106,7 +106,7 @@ class Agent:
 
     # selects a random direction to move to and updates the rewards
     def policy_rand(self):
-        seed = np.random.rand()
+        seed = random.uniform(0, 1)
         if seed <= 0.25:
             self.currMove = "RIGHT"
         elif seed <= 0.5 :

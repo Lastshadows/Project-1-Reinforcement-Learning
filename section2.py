@@ -1,4 +1,4 @@
- import numpy as np
+import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import sys
@@ -10,6 +10,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='The default policy is RIGHT')
 	parser.add_argument("--policy",type = str,
 		help="chose a policy between always :  RIGHT LEFT UP DOWN \n or for random : RAND")
+	parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
 	args = parser.parse_args()
 
 	policy = "RIGHT"
@@ -28,9 +29,11 @@ if __name__ == '__main__':
 	        [6, -9, 4, 19, -5],
 	        [-20, -17, -4, -3, 9]])
 
-	steps = 1000
+	steps = 10
 	discount =  0.99
 	beta = 0.5
+	if args.stochastic==False:
+		beta = 0
 	initialI = 3
 	initialJ = 0
 	game = Game(initialI,initialJ,array,discount,steps,beta,policy)

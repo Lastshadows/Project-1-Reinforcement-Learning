@@ -19,6 +19,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='The default policy is RIGHT')
 	parser.add_argument("--policy",type = str,
 		help="chose a policy between always :  RIGHT LEFT UP DOWN \n or for random : RAND")
+	parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
 	args = parser.parse_args()
 
 	policy = "RIGHT"
@@ -35,10 +36,15 @@ if __name__ == '__main__':
 			print("UNKNOWN policy: "+args.policy)
 			print("TRY : RIGHT - LEFT - UP - DOWN - RAND")
 			sys.exit(0)
-
+	else :
+		policy = "RIGHT"
+		#size_y = 1
 	steps = 1000
 	discount =  0.99
 	beta = 0.5
+
+	if args.stochastic==False:
+		beta = 0
 
 	vectorScores = np.zeros((size_x,steps))
 
@@ -47,13 +53,16 @@ if __name__ == '__main__':
 
 	plt.figure(figsize=(20,10))
 
+	print(size_y)
 	legend = []
-
 	for i in range(size_x):
 		for j in range(size_y):
-			game = Game(initialI,initialJ,array,discount,steps, beta,policy)
-			game.start_game()
-			vectorScores[i][:] = game.get_scores()
+			for k in range(10):
+				game = Game(initialI,initialJ,array,discount,steps, beta,policy)
+				game.start_game()
+				vectorScores[i][:] = vectorScores[i][:] + game.get_scores()
+
+			vectorScores[i][:] = vectorScores[i][:]/10
 			plt.plot(vectorScores[i])
 			print(' The expected return for the row '+ str(i+1)+' and column '+str(j+1)+' : ' + str(game.scores[steps - 1]))
 			legend.append("row "+str(i+1) + " column " + str(j+1))
@@ -64,5 +73,5 @@ if __name__ == '__main__':
 
 
 	plt.legend(legend)
-	plt.title('Evolution of scores during the game (1000 steps) for the different initial positions using the '+policy+' policy')
+	#plt.title('Evolution of scores during the game (1000 steps) for the different initial positions using the '+policy+' policy')
 	plt.savefig('Evolution of scores during the game (1000 steps) for the different initial positions.png')
