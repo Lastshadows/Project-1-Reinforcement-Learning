@@ -17,7 +17,7 @@ beta = 0.5
 initialI = 0
 initialJ = 0
 
-game = Game(initialI,initialJ,array,discount,steps, beta)
+game = Game(initialI,initialJ,array,discount,steps, beta, "RAND")
 game.start_game()
 
 rewards =  game.rewardFromStateAndAction

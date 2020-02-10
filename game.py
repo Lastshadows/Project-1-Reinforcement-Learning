@@ -18,13 +18,13 @@ class Agent:
     factor when chosing an action.
 
     """
-    def __init__(self, positionI, positionJ,grid, randomFactor,policy, rewards ):
+    def __init__(self, positionI, positionJ,grid, randomFactor,policy ):
 
         self.positionI = positionI
         self.positionJ = positionJ
 
         self.grid = grid
-        self.initialGrid = rewards
+        self.initialGrid = grid.unchangedRewards
 
         self.score = 0
         self.randomFactor =  randomFactor
@@ -90,7 +90,17 @@ class Agent:
             self.currMove = "UP"
         else :
             self.currMove = "DOWN"
+
+        # computation of r(x,u)
+        i, j = self.positionI,self.positionJ
         self.move(self.currMove)
+        unalteredReward = self.grid.get_unchanged_reward(i,j)
+        self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
+
+        # saving data for computation of p(x'|x,u)
+        i2,j2 =  self.positionI,self.positionJ
+        self.state2FromState1AndAction = ((i2,j2), (i,j), self.currMove)
+
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
@@ -105,7 +115,7 @@ class Agent:
         # computation of r(x,u)
         i, j = self.positionI,self.positionJ
         self.move(self.currMove)
-        unalteredReward = self.initialGrid[i][j]
+        unalteredReward = self.grid.get_unchanged_reward(i,j)
         self.rewardFromStateAndAction = ( (unalteredReward, (i,j), self.currMove) )
 
         #saving data for computation of p(x'|x,u)
@@ -144,6 +154,7 @@ class Agent:
     rewards grid.
     """
     def policy_down(self):
+        
         self.currMove = "DOWN"
         self.move(self.currMove)
         self.receive_reward()
@@ -188,6 +199,7 @@ class Grid:
 
     def __init__(self,rewards, discountFactor):
         self.rewards = rewards
+        self.unchangedRewards = rewards
         self.discount = discountFactor
 
     """
@@ -217,6 +229,9 @@ class Grid:
         if i >= 0 and i<sizeI and j >= 0 and j<sizeJ:
             return True
         return False
+
+    def get_unchanged_reward(self, i,j):
+        return self.unchangedRewards[i][j]
 
 """
 This class represents the Game
