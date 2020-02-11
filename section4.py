@@ -6,6 +6,9 @@ import sys
 from game import Game
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
+	args = parser.parse_args()
 
 	array = np.array([
 	        [-3, 1, -5, 0, 19],
@@ -17,6 +20,8 @@ if __name__ == '__main__':
 	steps = 1000
 	discount =  0.99
 	beta = 0.5
+	if args.stochastic ==False:
+		beta = 0
 	initialI = 0
 	initialJ = 0
 	policy = "Q"
@@ -30,19 +35,5 @@ if __name__ == '__main__':
 		game.start_game()
 		scores += game.get_scores()
 
-
 	scores = scores/nb_run
 	print(scores)
-
-	"""
-	x = (initialI , initialJ )
-	u = "UP"
-	xp =  (initialI , initialJ +2)
-
-	r = game.grid.compute_r_x_u(x,u, beta)
-	p = game.grid.compute_proba_xprime_x_u(xp, x, u, beta)
-	q = game.grid.Q_function( 2, x, u, beta)
-
-	print(q)
-	print(r)
-	"""
