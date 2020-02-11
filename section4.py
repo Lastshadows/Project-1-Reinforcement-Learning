@@ -14,15 +14,14 @@ if __name__ == '__main__':
 	        [6, -9, 4, 19, -5],
 	        [-20, -17, -4, -3, 9]])
 
-	steps = 100
+	steps = 1000
 	discount =  0.99
 	beta = 0.5
 	initialI = 0
 	initialJ = 0
 	policy = "Q"
 
-
-	nb_run = 1
+	nb_run = 10
 	score = 0
 	scores = np.zeros(steps)
 

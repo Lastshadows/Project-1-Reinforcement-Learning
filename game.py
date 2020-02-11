@@ -91,6 +91,7 @@ class Agent:
 
     # according to the set policy, return the corresponding policy
     def policy(self):
+
         if self.policyType == 0:
             return self.policy_rand()
         elif self.policyType == 1:
@@ -128,7 +129,6 @@ class Agent:
 
     # makes the agent move to the left, and updates the
     # rewards grid.
-
     def policy_left(self):
         self.currMove = "LEFT"
         self.update_agent()
@@ -152,12 +152,12 @@ class Agent:
     # returns the best move to make according to the Q policy for a given N value
     def Q_policy(self):
 
-        N = 5 # need to change this to be more modular
+        N = 3 # need to change this to be more modular
         x = self.positionI,self.positionJ
         U = ["UP", "DOWN", "RIGHT", "LEFT"] # set of possible actions
 
         best_action = ""
-        best_Q = best_Q = float('-inf')
+        best_Q  = float('-inf')
         # find best action
         for u in U:
             Q = self.grid.Q_function( N, x, u, self.beta)
@@ -167,7 +167,7 @@ class Agent:
                 best_Q = Q
                 best_action = u
 
-        self.currMove = u
+        self.currMove = best_action
         self.update_agent()
 
 
