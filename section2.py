@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
 	policy = "RIGHT"
 	if args.policy:
-		if args.policy=="LEFT" or args.policy=="RIGHT" or args.policy=="UP" or args.policy=="DOWN" or args.policy =="RAND":
+		if args.policy=="LEFT" or args.policy=="RIGHT" or args.policy=="UP" or args.policy=="DOWN" or args.policy =="RAND" or args.policy =="Q":
 			policy = args.policy
 		else :
 			print("UNKNOWN policy: "+args.policy)

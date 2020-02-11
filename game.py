@@ -101,6 +101,8 @@ class Agent:
             return self.policy_up()
         elif self.policyType == 4:
             return self.policy_down()
+        elif self.policyType == 5:
+            return self.Q_policy()
         else :
             return
 
@@ -145,6 +147,27 @@ class Agent:
     """
     def policy_down(self):
         self.currMove = "DOWN"
+        self.update_agent()
+
+    # returns the best move to make according to the Q policy for a given N value
+    def Q_policy(self):
+
+        N = 5 # need to change this to be more modular
+        x = self.positionI,self.positionJ
+        U = ["UP", "DOWN", "RIGHT", "LEFT"] # set of possible actions
+
+        best_action = ""
+        best_Q = best_Q = float('-inf')
+        # find best action
+        for u in U:
+            Q = self.grid.Q_function( N, x, u, self.beta)
+
+            # if the action u yielded a better Q value
+            if Q > best_Q:
+                best_Q = Q
+                best_action = u
+
+        self.currMove = u
         self.update_agent()
 
 
@@ -234,18 +257,18 @@ class Grid:
         # if the movement was allowed, the i and j indexes are changed. Otherwise we hit a wall -> i j dont change we stay there
         if direction == "UP" and self.allowed_position(i-1,j)== True:
             i= i-1
-        elif direction == "DOWN" and self.grid.allowed_position(i+1,j)== True:
+        elif direction == "DOWN" and self.allowed_position(i+1,j)== True:
             i = i+1
-        elif direction == "RIGHT" and self.grid.allowed_position(i,j+1)== True:
+        elif direction == "RIGHT" and self.allowed_position(i,j+1)== True:
             j = j+1
-        elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
+        elif direction == "LEFT" and self.allowed_position(i,j-1)== True:
             j = j-1
 
         expectedReward = (self.rewards[i][j] * normalMoveChance) + (self.rewards[0][0]*resetChance)
 
         return expectedReward
 
-    # this fucntion returns the proba to get to state x' (xprime) from state x while doing action u
+    # this function returns the proba to get to state x' (xprime) from state x while doing action u
     # u is one of the following : "UP", "DOWN", "RIGHT", "LEFT"
     # beta is the proba to go back to (0,0) instead of doing the action u
     def compute_proba_xprime_x_u(self, xprime, x, u, beta):
@@ -260,11 +283,11 @@ class Grid:
         # computation of the state we would reach if u was applied to x
         if direction == "UP" and self.allowed_position(i-1,j)== True:
             i_moved = i-1
-        elif direction == "DOWN" and self.grid.allowed_position(i+1,j)== True:
+        elif direction == "DOWN" and self.allowed_position(i+1,j)== True:
             i_moved = i+1
-        elif direction == "RIGHT" and self.grid.allowed_position(i,j+1)== True:
+        elif direction == "RIGHT" and self.allowed_position(i,j+1)== True:
             j_moved = j+1
-        elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
+        elif direction == "LEFT" and self.allowed_position(i,j-1)== True:
             j_moved = j-1
 
         # if x' state not allowed, proba to get there is 0
@@ -290,6 +313,56 @@ class Grid:
         # if we get here, unexpected case, return -1
         print(" ERROR smth unexpected happened in p(x'|x,u)")
         return -1
+
+
+    def Q_function(self, N, x, u, beta):
+
+        # end case
+        if N == 0:
+            return 0
+
+        U = ["UP", "DOWN", "RIGHT", "LEFT"] # set of possible actions
+        X = [] # domain
+        sizeI, sizeJ=self.rewards.shape
+
+        # we add to the domain all possible states
+        for i in range(sizeI):
+            for j in range(sizeI):
+                X.append((i,j))
+
+        # computing the different terms of the Q function equation
+
+        # first term : the reward
+        ret = self.compute_r_x_u(x,u,beta)
+
+        # second term : the sum
+        sum = 0
+        for x_prime in X:
+
+            proba = self.compute_proba_xprime_x_u(x_prime,x,u,beta)
+
+            # if the proba is null, we can avoid unnecassary computations
+            if(proba == 0):
+                continue
+            # need to find the u that maximizes the next Q value
+            best_Q = float('-inf')
+
+            for u_prime in U:
+                curr_Q = self.Q_function(N-1, x_prime, u_prime,beta )
+
+                if curr_Q > best_Q:
+                    best_Q = curr_Q
+
+            sum += proba*best_Q
+
+        sum = sum*self.discount
+
+        # adding both terms
+        ret = ret + sum
+
+        return ret
+
+
 
 
 
@@ -339,6 +412,8 @@ class Game:
             policyType = 3
         elif direction == "DOWN":
             policyType = 4
+        elif direction == "Q":
+            policyType = 5
         else:
             print("error unknown direction: "+direction)
         return policyType
