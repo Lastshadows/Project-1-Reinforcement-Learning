@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	        [-20, -17, -4, -3, 9]])
 
 	size_x,size_y=array.shape
-	steps = 1000
+	steps = 500
 	discount =  0.99
 	beta = 0.5
 	if args.stochastic ==False:
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 	plt.figure(figsize=(20,10))
 
-	print(size_y)
+
 	legend = []
 	for i in range(size_x):
 		for j in range(size_y):

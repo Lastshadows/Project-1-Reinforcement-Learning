@@ -32,7 +32,7 @@ if __name__ == '__main__':
 			size_x = 1
 		elif args.policy == "RAND":
 			policy = args.policy
-		else : 
+		else :
 			print("UNKNOWN policy: "+args.policy)
 			print("TRY : RIGHT - LEFT - UP - DOWN - RAND")
 			sys.exit(0)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
 	plt.figure(figsize=(20,10))
 
-	print(size_y)
+
 	legend = []
 	for i in range(size_x):
 		for j in range(size_y):
@@ -66,10 +66,10 @@ if __name__ == '__main__':
 			plt.plot(vectorScores[i])
 			print(' The expected return for the row '+ str(i+1)+' and column '+str(j+1)+' : ' + str(game.scores[steps - 1]))
 			legend.append("row "+str(i+1) + " column " + str(j+1))
-			initialJ = initialJ + 1 
+			initialJ = initialJ + 1
 
 		initialJ = 0
-		initialI = initialI + 1 
+		initialI = initialI + 1
 
 
 	plt.legend(legend)
