@@ -7,4 +7,4 @@
 * Section 4 -> Bardhyl
 * Section 5 --> Pierre
 * section 5 : r doit etre trouvé aussi, vérifier que c'est bien comme on a dit (valeur instantanée)
-* changer beta pour que ca revienne case départ et pas rester sur place
+* beta = chance de revenir case départ, vérifier que bien utilisé comme tel

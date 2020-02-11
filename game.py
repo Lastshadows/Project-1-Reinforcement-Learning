@@ -71,7 +71,7 @@ class Agent:
         i = self.positionI
         j = self.positionJ
 
-        # if unlucky, nothing moves
+        # if unlucky, goes back to tile (0,0)
         if rand > (1-self.beta):
             direction = "RESET"
 
@@ -122,10 +122,11 @@ class Agent:
     def policy_right(self):
         self.currMove = "RIGHT"
         self.update_agent()
-    """
-    makes the agent move to the left, and updates the
-    rewards grid.
-    """
+
+
+    # makes the agent move to the left, and updates the
+    # rewards grid.
+
     def policy_left(self):
         self.currMove = "LEFT"
         self.update_agent()
@@ -217,6 +218,81 @@ class Grid:
 
     def get_unchanged_reward(self, i,j):
         return self.unchangedRewards[i][j]
+
+    # takes a state x, an action u and a proba beta as arguments
+    # x is a tuple representing the position i,j on the board
+    # u is one of the following : "UP", "DOWN", "RIGHT", "LEFT"
+    # beta is the probability the agent has to  go back to the (0,0) state when he tries to move  and should be between 0 and 1
+    # this functions returns the expected reward at a given time and state in the game for a given move
+    def compute_r_x_u(self,x,u,beta):
+
+        resetChance = beta
+        normalMoveChance =  1 - beta
+        i,j = x
+        direction =  u
+
+        # if the movement was allowed, the i and j indexes are changed. Otherwise we hit a wall -> i j dont change we stay there
+        if direction == "UP" and self.allowed_position(i-1,j)== True:
+            i= i-1
+        elif direction == "DOWN" and self.grid.allowed_position(i+1,j)== True:
+            i = i+1
+        elif direction == "RIGHT" and self.grid.allowed_position(i,j+1)== True:
+            j = j+1
+        elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
+            j = j-1
+
+        expectedReward = (self.rewards[i][j] * normalMoveChance) + (self.rewards[0][0]*resetChance)
+
+        return expectedReward
+
+    # this fucntion returns the proba to get to state x' (xprime) from state x while doing action u
+    # u is one of the following : "UP", "DOWN", "RIGHT", "LEFT"
+    # beta is the proba to go back to (0,0) instead of doing the action u
+    def compute_proba_xprime_x_u(self, xprime, x, u, beta):
+
+        resetChance = beta
+        normalMoveChance =  1 - beta
+        i,j = x # current state
+        direction =  u
+        i_prime, j_prime = xprime # x' state
+        i_moved, j_moved =  x
+
+        # computation of the state we would reach if u was applied to x
+        if direction == "UP" and self.allowed_position(i-1,j)== True:
+            i_moved = i-1
+        elif direction == "DOWN" and self.grid.allowed_position(i+1,j)== True:
+            i_moved = i+1
+        elif direction == "RIGHT" and self.grid.allowed_position(i,j+1)== True:
+            j_moved = j+1
+        elif direction == "LEFT" and self.grid.allowed_position(i,j-1)== True:
+            j_moved = j-1
+
+        # if x' state not allowed, proba to get there is 0
+        if self.allowed_position(i_prime,j_prime) is not True:
+            return 0
+
+        # if x' isnt (0.0) and isnt the desired state, then probability to reach it is 0
+        if ( not(i_moved == i_prime and j_moved == j_prime) and not (i_prime == 0 and j_prime == 0) ):
+            return 0
+
+        # if the desired state is the (0.0) state, and is also x', the proba is 1 (either we reach it the normal way or we reach it through stochasticity)
+        if ( (i_moved == i_prime  and j_moved == j_prime) and (i_prime == 0 and j_prime == 0) ):
+            return 1
+
+        # if x' is the desired state (x + u), then the proba is just the nomal move chance to reach its target
+        if ( (i_moved == i_prime  and j_moved == j_prime) ):
+            return normalMoveChance
+
+        # if x' is (0.0) and x' is not the desired state (x +u), then the proba is beta
+        if (i_prime == 0 and j_prime == 0) and not (i_prime == i_moved and j_prime == j_moved):
+            return resetChance
+
+        # if we get here, unexpected case, return -1
+        print(" ERROR smth unexpected happened in p(x'|x,u)")
+        return -1
+
+
+
 
 """
 This class represents the Game
