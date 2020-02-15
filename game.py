@@ -3,6 +3,140 @@ import matplotlib.pyplot as plt
 import random
 
 """
+reward_state_action returns the estimated average reward associated with state x,action u
+given a list of trajectories
+Inputs : State considered x
+         Action considered u
+         list of trajectories trajectories
+
+"""
+def reward_state_action(x,u,trajectories):
+    reward = 0 #the sum of rewards for pair x,u
+    counter = 0 #counter of number of detected x,u pairs
+
+    for trajectory in trajectories:
+        for stateT,actionT,rewardT in trajectory:
+            if stateT == x and actionT == u:
+                reward = reward + rewardT
+                counter = counter+1
+
+    if counter >0:
+        #average reward associated with pair x,u
+        reward =  reward/counter
+    else 
+        reward = 0
+
+    return reward
+
+
+"""
+proba_state1_action_state2 returns the estimated probability of landing in state x2 from state x1 
+if we took action u given a list of trajectories
+inputs : Initial state x1
+         Action taken u
+         Final state x2 
+         List of trajectories trajectories
+"""
+def proba_state1_action_state2(x1,u,x2,trajectories):
+    x1uPairDetected = 0 #counter for the number of (x1,u) pair 
+    x1ux2TripletDetected = 0 #counter for the number of (x1,u,x2) triplets
+    proportion = 0
+
+    for trajectory in trajectories:
+        for state1,action,state2 in trajectory:
+            if state1 == x1 and action == u:
+                x1uPairDetected = x1uPairDetected + 1
+                if state2 == x2:
+                    x1ux2TripletDetected = x1ux2TripletDetected +1 
+
+    #if some (x1,u) was found 
+    if x1uPairDetected >= 0:
+        proportion = x1ux2TripletDetected/x1uPairDetected
+
+    return proportion
+
+class cell:
+    def __init__(self):
+        self.up = 0
+        self.down = 0
+        self.right = 0
+        self.left = 0
+
+        self.upVector = []
+        self.downVector = []
+        self.rightVector = []
+        self.leftVector  = []
+
+    def add_to_vector(value,move):
+        if move == "LEFT":
+            self.leftVector.append(value)
+        elif move =="RIGHT":
+            self.rightVector.append(value)
+        elif move =="UP":
+            self.upVector.append(value)
+        elif move =="DOWN":
+            self.downVector.append(value)
+        return
+
+    def update_cell(self):
+        cumulatedSum = 0
+        for i in range(len(upVector)):
+            cumulatedSum = cumulatedSum+upVector[i]
+        self.up = cumulatedSum/len(upVector)
+
+        cumulatedSum = 0
+        for i in range(len(downVector)):
+            cumulatedSum = cumulatedSum+downVector[i]
+        self.down = cumulatedSum/len(downVector)
+
+        cumulatedSum = 0
+        for i in range(len(rightVector)):
+            cumulatedSum = cumulatedSum+rightVector[i]
+        self.right = cumulatedSum/len(rightVector)
+
+        cumulatedSum = 0
+        for i in range(len(leftVector)):
+            cumulatedSum = cumulatedSum+leftVector[i]
+        self.left = cumulatedSum/len(leftVector)
+
+    def get_value(self,move):
+        if move == "LEFT":
+            return self.left
+        elif move == "RIGHT":
+            return self.right
+        elif move == "UP":
+            return self.up
+        elif move == "Down"
+            return self.down
+        else:
+            return -1
+
+class estimator:
+    def __init__(self,sizeI,sizeJ,gamma):
+        self.reward = []
+        for i in range(sizeI):
+            for j in range(sizeJ):
+                self.reward.append(cell())
+        self.sizeI = sizeI
+        self.sizeJ = sizeJ
+        self.gamma = gamma
+
+    def update_rewards(self,rewardsFromStateAction):
+        for j in rewardsFromStateAction:
+            i = 0
+            for r,x,u in rewardsFromStateAction:
+                stateNumber = x[0]*sizeJ+x[1] 
+                self.reward[stateNumber].add_to_vector(r,u*(1/self.gamma))
+
+        for i in range(len(self.reward)):
+            self.reward[i].update_cell()
+
+    def estimated_value_state_action(self,state,action):
+        i,j = state
+        stateNumber = i*sizeJ+j
+        self.reward[stateNumber].get_value(action)
+
+"""
 The agent class represents the artificial autonomous intelligent agent. It
 possesses all the data needed to take decisions based on the state it is in,
 and possesses methods allowing him to act upon these decisions
