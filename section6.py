@@ -6,6 +6,10 @@ import random
 
 from game import Game
 
+"""
+Cell class represents the 4 tuples (state,action)
+of a given state X 
+"""
 class Cell:
 	def __init__(self,positionI,positionJ,alpha):
 		self.i = positionI
@@ -20,6 +24,8 @@ class Cell:
 		self.left = 0
 		self.right = 0
 
+	#Updates the cell corresponding cell value given the action, the reward, the cell reached 
+	#and the value of gamma
 	def update_cell(self,action,reward,cell,gamma):	
 		if action == "UP":
 			self.up = (1-self.alpha)*self.up + self.alpha*(reward + gamma * cell.get_max())
@@ -32,10 +38,13 @@ class Cell:
 		else:
 			return 0
 
+	#Returns the maximum of all the values for the cell
 	def get_max(self):
 		return max(self.up,self.down,self.right,self.left)
 
-
+"""
+Qgrid contains a list of cells for each state
+"""
 class Qgrid:
 	def __init__(self,grid,gamma,beta,alpha):
 		#list of cells 
@@ -64,6 +73,7 @@ class Qgrid:
 
 				self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma)
 
+	#print the grid
 	def print_grid(self):
 		print("format :")
 		print("cell number we read from left to right and up to down")
