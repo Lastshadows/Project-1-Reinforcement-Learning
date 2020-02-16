@@ -4,8 +4,120 @@ import argparse
 import sys
 
 from game import Game
+class cell:
+    def __init__(self):
+        self.up = 0
+        self.down = 0
+        self.right = 0
+        self.left = 0
 
-# if __name__ == '__main__':
+        self.upVector = []
+        self.downVector = []
+        self.rightVector = []
+        self.leftVector  = []
+
+    def add_to_vector(value,move):
+        if move == "LEFT":
+            self.leftVector.append(value)
+        elif move =="RIGHT":
+            self.rightVector.append(value)
+        elif move =="UP":
+            self.upVector.append(value)
+        elif move =="DOWN":
+            self.downVector.append(value)
+        return
+
+    def update_cell(self):
+        cumulatedSum = 0
+        for i in range(len(upVector)):
+            cumulatedSum = cumulatedSum+upVector[i]
+        self.up = cumulatedSum/len(upVector)
+
+        cumulatedSum = 0
+        for i in range(len(downVector)):
+            cumulatedSum = cumulatedSum+downVector[i]
+        self.down = cumulatedSum/len(downVector)
+
+        cumulatedSum = 0
+        for i in range(len(rightVector)):
+            cumulatedSum = cumulatedSum+rightVector[i]
+        self.right = cumulatedSum/len(rightVector)
+
+        cumulatedSum = 0
+        for i in range(len(leftVector)):
+            cumulatedSum = cumulatedSum+leftVector[i]
+        self.left = cumulatedSum/len(leftVector)
+
+    def get_value(self,move):
+        if move == "LEFT":
+            return self.left
+        elif move == "RIGHT":
+            return self.right
+        elif move == "UP":
+            return self.up
+        elif move == "Down"
+            return self.down
+        else:
+            return -1
+
+class estimator:
+    def __init__(self,sizeI,sizeJ,gamma):
+        self.reward = []
+        for i in range(sizeI):
+            for j in range(sizeJ):
+                self.reward.append(cell())
+        self.sizeI = sizeI
+        self.sizeJ = sizeJ
+        self.gamma = gamma
+
+    def update_rewards(self,rewardsFromStateAction):
+        for j in rewardsFromStateAction:
+            i = 0
+            for r,x,u in rewardsFromStateAction:
+                stateNumber = x[0]*sizeJ+x[1] 
+                self.reward[stateNumber].add_to_vector(r,u*(1/self.gamma))
+
+        for i in range(len(self.reward)):
+            self.reward[i].update_cell()
+
+    def estimated_value_state_action(self,state,action):
+        i,j = state
+        stateNumber = i*sizeJ+j
+        self.reward[stateNumber].get_value(action)
+
+def reward_state_action(x,u,trajectories):
+	reward = 0
+	counter = 0
+	for trajectory in trajectories:
+		for stateT,actionT,rewardT in trajectory:
+			if stateT == x and actionT == u:
+				reward = reward + rewardT
+				counter = counter+1
+
+	if counter >0:
+		reward =  reward/counter
+	else 
+		reward = 0
+
+	return reward
+
+def proba_state1_action_state2(x1,u,x2,trajectories):
+	x1uPairDetected = 0
+	x1ux2TripletDetected = 0
+	proportion = 0
+
+	for trajectory in trajectories:
+		for state1,action,state2 in trajectory:
+			if state1 == x1 and action == u:
+				x1uPairDetected = x1uPairDetected + 1
+				if state2 == x2:
+					x1ux2TripletDetected = x1ux2TripletDetected +1 
+
+	if x1uPairDetected >= 0:
+		proportion = x1ux2TripletDetected/x1uPairDetected
+
+	return proportion
+
 
 #Check if the position i,j is allowed in grid
 def allowed_move(grid,i,j):
@@ -19,11 +131,11 @@ Qgrid
 
 """
 class Qgrid:
-	def __init__(self,grid,gamma):
+	def __init__(self,grid,gamma,beta):
 		#list of supercells 
 		self.grid = []
 		self.gamma = gamma
-
+		self.beta = beta
 		sizeI, sizeJ=grid.shape
 
 		#Initialize superCell 
@@ -35,34 +147,32 @@ class Qgrid:
 		#Update superCell
 		for i in range(sizeI):
 			for j in range(sizeJ):
+				self.grid[(i*sizeJ)+j].set_00_supercell(self.grid[0])
 				if j>0:
 					self.grid[(i*sizeJ)+j].set_left_supercell(self.grid[(i*sizeJ)+j-1])
-					print("Left of element "+str(i)+" "+str(j)+" : "+str(i)+" "+str(j-1))
-				print("cell Left reward: "+str(self.grid[(i*sizeJ)+j].cellLeft))
 				if j<sizeJ-1:
 					self.grid[(i*sizeJ)+j].set_right_supercell(self.grid[(i*sizeJ)+j+1])
-					print("Right of element "+str(i)+" "+str(j)+" : "+str(i)+" "+str(j+1))
-				print("cell right reward: "+str(self.grid[(i*sizeJ)+j].cellRight))
 				if i>0:
 					self.grid[(i*sizeJ)+j].set_up_supercell(self.grid[(i-1)*sizeJ+j])
-					print("Up of element "+str(i)+" "+str(j)+" : "+str(i-1)+" "+str(j))
-				print("cell up reward: "+str(self.grid[(i*sizeJ)+j].cellUp))
 				if i<sizeI-1:
 					self.grid[(i*sizeJ)+j].set_down_supercell(self.grid[(i+1)*sizeJ+j])
-					print("Down of element "+str(i)+" "+str(j)+" : "+str(i+1)+" "+str(j))
-				print("cell down reward: "+str(self.grid[(i*sizeJ)+j].cellDown))
-				print("\n\n")
 
 	#Updates Qn for each state Qn-1
 	def update_grid(self):
-		print("HERRRRE \n\n")
 		for i in range(len(self.grid)):
-			self.grid[i].update_inner_cells(self.gamma)
-			print(i)
-			print(str(self.grid[i].cellUp)+" "+str(self.grid[i].cellDown)+" "+str(self.grid[i].cellRight)+" "+str(self.grid[i].cellLeft))
-			print("\n\n")
+			self.grid[i].update_inner_cells(self.gamma,self.beta)
 
+		for i in range(len(self.grid)):
+			self.grid[i].update_old_cells()
 
+	def print_grid(self):
+		print("format :")
+		print("cell number we read from left to right and up to down")
+		print("Qvalue of cell Left-Up-Right-Down")
+		for i in range(len(self.grid)):
+			print("cell number :" + str(i))
+			print(str(self.grid[i].cellLeft)+" "+str(self.grid[i].cellUp)+" "+str(self.grid[i].cellRight)+" "+str(self.grid[i].cellDown))
+			print("\n")
 
 class SuperCell:
 	def __init__(self,grid,positionI,positionJ):
@@ -71,12 +181,13 @@ class SuperCell:
 
 		i = positionI
 		j = positionJ
-
+		self.superCell00 = None
 		self.superCellRight = None
 		self.superCellLeft = None
 		self.superCellUp = None
 		self.superCellDown = None
 
+		self.cell00 = grid[0][0]
 		if allowed_move(grid,i,j-1):
 			self.cellLeft = grid[i][j-1]
 		else: 
@@ -101,6 +212,20 @@ class SuperCell:
 			self.cellUp = grid[i][j]
 			self.superCellUp = self
 
+		self.oldCellUp = self.cellUp.copy()
+		self.oldCellDown = self.cellDown.copy()
+		self.oldCellRight = self.cellRight.copy()
+		self.oldCellLeft = self.cellLeft.copy()
+
+		self.rewardUp = self.oldCellUp
+		self.rewardDown = self.cellDown
+		self.rewardRight = self.cellRight
+		self.rewardLeft = self.cellLeft
+
+	def set_00_supercell(self,superCell00):
+		self.superCell00 = superCell00
+
+
 	def set_up_supercell(self,superCellUp):
 		if self.superCellUp == None :
 			self.superCellUp = superCellUp
@@ -118,45 +243,45 @@ class SuperCell:
 			self.superCellLeft = superCellLeft
 
 	def get_maximum(self):
-		return max(self.cellUp,self.cellDown,self.cellRight,self.cellLeft)
+		return max(self.oldCellUp,self.oldCellDown,self.oldCellRight,self.oldCellLeft)
 
-	def update_inner_cells(self,gamma):
-		self.cellUp = self.cellUp + gamma * self.superCellUp.get_maximum()
-		self.cellDown = self.cellDown + gamma * self.superCellDown.get_maximum()
-		self.cellRight = self.cellRight + gamma * self.superCellRight.get_maximum()
-		self.cellLeft = self.cellLeft  + gamma * self.superCellLeft.get_maximum()
+	def update_old_cells(self):
+		self.oldCellUp = self.cellUp.copy()
+		self.oldCellDown = self.cellDown.copy()
+		self.oldCellRight = self.cellRight.copy()
+		self.oldCellLeft = self.cellLeft.copy()
 
-array = np.array([
-        [-3, 1, -5, 0, 19],
-        [6, 3, 8, 9, 10],
-        [5, -8, 4, 1, -8],
-        [6, -9, 4, 19, -5],
-        [-20, -17, -4, -3, 9]])
+	def update_inner_cells(self,gamma,beta):
+		self.cellUp = (1-beta)*self.rewardUp + beta*self.cell00 + (1-beta)*gamma * self.superCellUp.get_maximum() + beta*gamma*self.superCell00.get_maximum()
+		self.cellDown = (1-beta)*self.rewardDown + beta*self.cell00 + (1-beta)*gamma * self.superCellDown.get_maximum()+ beta*gamma*self.superCell00.get_maximum()
+		self.cellRight = (1-beta)*self.rewardRight + beta*self.cell00 + (1-beta)*gamma * self.superCellRight.get_maximum()+ beta*gamma*self.superCell00.get_maximum()
+		self.cellLeft = (1-beta)*self.rewardLeft  + beta*self.cell00 +(1-beta)*gamma * self.superCellLeft.get_maximum()+ beta*gamma*self.superCell00.get_maximum()
 
-gamma = 0.99
 
-grid = Qgrid(array,gamma)
-grid.update_grid()
+if __name__ == '__main__':
+	array = np.array([
+	        [-3, 1, -5, 0, 19],
+	        [6, 3, 8, 9, 10],
+	        [5, -8, 4, 1, -8],
+	        [6, -9, 4, 19, -5],
+	        [-20, -17, -4, -3, 9]])
 
-# 	parser = argparse.ArgumentParser(description='The default policy is RIGHT')
-# 	parser.add_argument("--policy",type = str,
-# 		help="chose a policy between always :  RIGHT LEFT UP DOWN \n or for random : RAND")
+	#array = np.array([
+	#		[0,-5,10],
+	#		[0,0,0],
+	#		])
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
+	args = parser.parse_args()
 
-# 	parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
-
-# 	args = parser.parse_args()
-
-# 	policy = "RIGHT"
-# 	if args.policy:
-# 		if args.policy=="LEFT" or args.policy=="RIGHT" or args.policy=="UP" or args.policy=="DOWN" or args.policy =="RAND":
-# 			policy = args.policy
-# 		else : 
-# 			print("UNKNOWN policy: "+args.policy)
-# 			print("TRY : RIGHT - LEFT - UP - DOWN - RAND")
-# 			sys.exit(0)
-
-# 	distribution = proba_distribution(policy)
-# 	if distribution == -1:
-# 		sys.exit(0)
-
-# 	stats(array,distribution,beta,args.stochasticity)
+	gamma = 0.99
+	beta = 0.5
+	N = 1000
+	if args.stochastic ==False:
+		beta = 0
+	grid = Qgrid(array,gamma,beta)
+	grid.print_grid()
+	for i in range (N):
+		#print(i)
+		grid.update_grid()
+	grid.print_grid()
