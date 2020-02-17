@@ -3,54 +3,53 @@ import matplotlib.pyplot as plt
 import random
 
 """
-reward_state_action returns the estimated average reward associated with state x,action u
+reward_state_action_MDP returns the estimated average reward associated with state x,action u
 given a list of trajectories
 Inputs : State considered x
          Action considered u
          list of trajectories trajectories
 
 """
-def reward_state_action(x,u,trajectories):
+def reward_state_action_MDP(x,u,trajectory):
     reward = 0 #the sum of rewards for pair x,u
     counter = 0 #counter of number of detected x,u pairs
 
-    for trajectory in trajectories:
-        for stateT,actionT,rewardT in trajectory:
-            if stateT == x and actionT == u:
-                reward = reward + rewardT
-                counter = counter+1
+
+    for stateT,actionT,state2,rewardT in trajectory:
+        if stateT == x and actionT == u:
+            reward = reward + rewardT
+            counter = counter+1
 
     if counter >0:
         #average reward associated with pair x,u
         reward =  reward/counter
-    else 
+    elif counter <= 0:
         reward = 0
 
     return reward
 
 
 """
-proba_state1_action_state2 returns the estimated probability of landing in state x2 from state x1 
+proba_state1_action_state2_MDP returns the estimated probability of landing in state x2 from state x1
 if we took action u given a list of trajectories
 inputs : Initial state x1
          Action taken u
-         Final state x2 
+         Final state x2
          List of trajectories trajectories
 """
-def proba_state1_action_state2(x1,u,x2,trajectories):
-    x1uPairDetected = 0 #counter for the number of (x1,u) pair 
+def proba_state1_action_state2_MDP(x1,u,x2,trajectory):
+    x1uPairDetected = 0 #counter for the number of (x1,u) pair
     x1ux2TripletDetected = 0 #counter for the number of (x1,u,x2) triplets
     proportion = 0
 
-    for trajectory in trajectories:
-        for state1,action,state2 in trajectory:
-            if state1 == x1 and action == u:
-                x1uPairDetected = x1uPairDetected + 1
-                if state2 == x2:
-                    x1ux2TripletDetected = x1ux2TripletDetected +1 
+    for state1,action,state2, reward in trajectory:
+        if state1 == x1 and action == u:
+            x1uPairDetected = x1uPairDetected + 1
+            if state2 == x2:
+                x1ux2TripletDetected = x1ux2TripletDetected +1
 
-    #if some (x1,u) was found 
-    if x1uPairDetected >= 0:
+    #if some (x1,u) was found
+    if x1uPairDetected > 0:
         proportion = x1ux2TripletDetected/x1uPairDetected
 
     return proportion
@@ -78,26 +77,28 @@ class cell:
             self.downVector.append(value)
         return
 
+    # from the values added in the different cells for the different moves,
+    # computes the average expected value associated to a move
     def update_cell(self):
         cumulatedSum = 0
         for i in range(len(upVector)):
-            cumulatedSum = cumulatedSum+upVector[i]
-        self.up = cumulatedSum/len(upVector)
+            cumulatedSum = cumulatedSum+self.upVector[i]
+        self.up = cumulatedSum/len(self.upVector)
 
         cumulatedSum = 0
         for i in range(len(downVector)):
-            cumulatedSum = cumulatedSum+downVector[i]
-        self.down = cumulatedSum/len(downVector)
+            cumulatedSum = cumulatedSum+self.downVector[i]
+        self.down = cumulatedSum/len(self.downVector)
 
         cumulatedSum = 0
         for i in range(len(rightVector)):
-            cumulatedSum = cumulatedSum+rightVector[i]
-        self.right = cumulatedSum/len(rightVector)
+            cumulatedSum = cumulatedSum+self.rightVector[i]
+        self.right = cumulatedSum/len(self.rightVector)
 
         cumulatedSum = 0
         for i in range(len(leftVector)):
-            cumulatedSum = cumulatedSum+leftVector[i]
-        self.left = cumulatedSum/len(leftVector)
+            cumulatedSum = cumulatedSum+self.leftVector[i]
+        self.left = cumulatedSum/len(self.leftVector)
 
     def get_value(self,move):
         if move == "LEFT":
@@ -106,27 +107,32 @@ class cell:
             return self.right
         elif move == "UP":
             return self.up
-        elif move == "Down"
+        elif move == "Down":
             return self.down
         else:
             return -1
 
 class estimator:
     def __init__(self,sizeI,sizeJ,gamma):
-        self.reward = []
+
+        self.reward = [] # table of cells
+
         for i in range(sizeI):
             for j in range(sizeJ):
                 self.reward.append(cell())
+
         self.sizeI = sizeI
         self.sizeJ = sizeJ
         self.gamma = gamma
 
+    # takes a list of (r,x,u) tuples and updates the statistics held in the estimator's cells
+    # according to it
     def update_rewards(self,rewardsFromStateAction):
         for j in rewardsFromStateAction:
             i = 0
             for r,x,u in rewardsFromStateAction:
-                stateNumber = x[0]*sizeJ+x[1] 
-                self.reward[stateNumber].add_to_vector(r,u*(1/self.gamma))
+                stateNumber = x[0]*sizeJ+x[1]
+                self.reward[stateNumber].add_to_vector(r,u*(1/self.gamma)) # ???
 
         for i in range(len(self.reward)):
             self.reward[i].update_cell()
@@ -134,7 +140,7 @@ class estimator:
     def estimated_value_state_action(self,state,action):
         i,j = state
         stateNumber = i*sizeJ+j
-        self.reward[stateNumber].get_value(action)
+        return self.reward[stateNumber].get_value(action) # added the return... I guess ?
 
 """
 The agent class represents the artificial autonomous intelligent agent. It
@@ -153,7 +159,7 @@ class Agent:
     factor when chosing an action.
 
     """
-    def __init__(self, positionI, positionJ,grid, beta,policy ):
+    def __init__(self, positionI, positionJ,grid, beta,policy, MDP ):
 
         self.positionI = positionI
         self.positionJ = positionJ
@@ -164,9 +170,11 @@ class Agent:
         self.score = 0
         self.beta =  beta
         self.policyType = policy
+        self.MDP = MDP
 
         self.currMove = "NONE"
         self.currReward = 0
+        self.currUnchangedReward = 0
         # first element is the reward, second is a tuple represetning the state and the action that lead to the reward
         self.rewardFromStateAndAction = () # r_x_u
         self.state2FromState1AndAction = ()#  x' x u
@@ -191,6 +199,7 @@ class Agent:
         # updating remaining data
         self.receive_reward()
         self.currReward =  self.grid.get_reward(self.positionI,self.positionJ)
+        self.currUnchangedReward =  self.grid.get_unchanged_reward(self.positionI,self.positionJ)
         self.grid.update_reward()
 
     """
@@ -237,7 +246,7 @@ class Agent:
         elif self.policyType == 4:
             return self.policy_down()
         elif self.policyType == 5:
-            return self.Q_policy()
+            return self.Q_policy(self.MDP)
         else :
             return
 
@@ -284,7 +293,7 @@ class Agent:
         self.update_agent()
 
     # returns the best move to make according to the Q policy for a given N value
-    def Q_policy(self):
+    def Q_policy(self, MDP):
 
         N = 3 # need to change this to be more modular
         x = self.positionI,self.positionJ
@@ -294,7 +303,7 @@ class Agent:
         best_Q  = float('-inf')
         # find best action
         for u in U:
-            Q = self.grid.Q_function( N, x, u, self.beta)
+            Q = self.grid.Q_function( N, x, u, self.beta, MDP)
 
             # if the action u yielded a better Q value
             if Q > best_Q:
@@ -324,9 +333,12 @@ class Agent:
     def get_curr_move(self):
         return self.currMove
 
-    # returns the last move done by the agent
+    # returns the reward associated to the  last move done by the agent
     def get_curr_reward(self):
         return self.currReward
+
+    def get_unchanged_reward(self):
+        return self.currUnchangedReward
 
     # returns the initial reward the agent gets for doing action u from state x .
     # discount factor is not accounted for
@@ -344,6 +356,7 @@ class Grid:
         self.rewards = rewards
         self.unchangedRewards = rewards
         self.discount = discountFactor
+        self.previousTrajectory = []
 
     """
     updates the rewards at a given time across the board by multiplying it by
@@ -360,6 +373,7 @@ class Grid:
     """
     def get_reward(self,i,j):
         return self.rewards[i][j]
+
 
     """
     checks if a position is legal or not.
@@ -398,7 +412,7 @@ class Grid:
         elif direction == "LEFT" and self.allowed_position(i,j-1)== True:
             j = j-1
 
-        expectedReward = (self.rewards[i][j] * normalMoveChance) + (self.rewards[0][0]*resetChance)
+        expectedReward = (self.unchangedRewards[i][j] * normalMoveChance) + (self.unchangedRewards[0][0]*resetChance)
 
         return expectedReward
 
@@ -449,7 +463,7 @@ class Grid:
         return -1
 
 
-    def Q_function(self, N, x, u, beta):
+    def Q_function(self, N, x, u, beta, MDP):
 
         # end case
         if N == 0:
@@ -464,16 +478,28 @@ class Grid:
             for j in range(sizeI):
                 X.append((i,j))
 
+        # security check : if MDP, need a  trajectory
+        if MDP is True:
+            if len(self.previousTrajectory) == 0:
+                print("error in Q_function : MDP was set to true but no previous trajectory registered")
+
         # computing the different terms of the Q function equation
 
         # first term : the reward
-        ret = self.compute_r_x_u(x,u,beta)
+        if MDP is True:
+            ret = reward_state_action_MDP(x,u,self.previousTrajectory)
+        elif MDP is False:
+            ret = self.compute_r_x_u(x,u,beta)
 
         # second term : the sum
         sum = 0
         for x_prime in X:
 
-            proba = self.compute_proba_xprime_x_u(x_prime,x,u,beta)
+            if MDP is True:
+                proba = proba_state1_action_state2_MDP(x,u,x_prime,self.previousTrajectory)
+            elif MDP is False:
+                proba = self.compute_proba_xprime_x_u(x_prime,x,u,beta)
+
 
             # if the proba is null, we can avoid unnecassary computations
             if(proba == 0):
@@ -482,7 +508,7 @@ class Grid:
             best_Q = float('-inf')
 
             for u_prime in U:
-                curr_Q = self.Q_function(N-1, x_prime, u_prime,beta )
+                curr_Q = self.Q_function(N-1, x_prime, u_prime,beta, MDP)
 
                 if curr_Q > best_Q:
                     best_Q = curr_Q
@@ -496,8 +522,10 @@ class Grid:
 
         return ret
 
-
-
+    # takes a trajectory list of (state1, u, state2, reward) and sets it
+    # as the homonym variable of the grid object
+    def set_prev_trajectory(self,trajectory):
+        self.previousTrajectory =  trajectory
 
 
 
@@ -517,11 +545,14 @@ class Game:
     'steps' is the amount of turn a game takes to end
     'beta' is the probability that the agent fails to move and stays
     still instead
+    'policy' is the policy the agent will be following
+    ' MDP'  is true or false and is indicating if, in the case policy is set to Q,
+    we follow a MDP based Q policy or not
     """
-    def __init__(self,positionI,positionJ,rewards,discount,steps, beta,policy):
+    def __init__(self,positionI,positionJ,rewards,discount,steps, beta,policy, MDP):
         self.grid = Grid(rewards,discount)
         policyType = self.policy_definition(policy)
-        self.agent = Agent(positionI,positionJ,self.grid, beta,policyType)
+        self.agent = Agent(positionI,positionJ,self.grid, beta,policyType, MDP)
         self.scores = np.zeros(steps)
         self.iPositions= np.zeros(steps)
         self.jPositions = np.zeros(steps)
@@ -529,6 +560,7 @@ class Game:
         self.moves = []
         self.rewards = []
         self.trajectory = []
+        self.trajectory_MDP = []
         self.rewardFromStateAndAction = []
         self.state2FromState1AndAction = []
 
@@ -573,6 +605,13 @@ class Game:
 
             self.rewardFromStateAndAction.append(self.agent.rewardFromStateAndAction)
             self.state2FromState1AndAction.append(self.agent.state2FromState1AndAction)
+
+            # building the trajectory for the MDP based Q policy (state1,u,state2,reward)
+            state1 =  self.iPositions[i], self.jPositions[i]
+            u = self.agent.get_curr_move()
+            state2 =  self.agent.get_position()
+            reward = self.agent.get_unchanged_reward()
+            self.trajectory_MDP.append((state1, u, state2, reward))
 
         # zip together all the elements vectors that together make up a trajectory into
         # the trajectory list

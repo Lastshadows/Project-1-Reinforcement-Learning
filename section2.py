@@ -36,7 +36,7 @@ if __name__ == '__main__':
 		beta = 0
 	initialI = 3
 	initialJ = 0
-	game = Game(initialI,initialJ,array,discount,steps,beta,policy)
+	game = Game(initialI,initialJ,array,discount,steps,beta,policy, False)
 	game.start_game()
 
 	for i in range(steps):

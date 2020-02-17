@@ -58,7 +58,7 @@ if __name__ == '__main__':
 	for i in range(size_x):
 		for j in range(size_y):
 			for k in range(10):
-				game = Game(initialI,initialJ,array,discount,steps, beta,policy)
+				game = Game(initialI,initialJ,array,discount,steps, beta,policy, False)
 				game.start_game()
 				vectorScores[i][:] = vectorScores[i][:] + game.get_scores()
 
