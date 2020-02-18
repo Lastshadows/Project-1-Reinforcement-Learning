@@ -6,7 +6,6 @@ import random
 
 from game import Game
 
-
 class AgentQ:
 
     """
@@ -180,15 +179,15 @@ class Cell:
 
     # Updates the cell corresponding cell value given the action, the reward, the cell reached
     # and the value of gamma
-    def update_cell(self,action,reward,cell,gamma):
+    def update_cell(self,action,reward,cell,gamma,t):
         if action == "UP":
-            self.up = (1-self.alpha)*self.up + self.alpha*(reward + gamma * cell.get_max())
+            self.up = (1-self.alpha(t))*self.up + self.alpha(t)*(reward + gamma * cell.get_max())
         elif action == "DOWN":
-            self.down = (1 - self.alpha)*self.down + self.alpha*(reward + gamma * cell.get_max())
+            self.down = (1 - self.alpha(t))*self.down + self.alpha(t)*(reward + gamma * cell.get_max())
         elif action == "LEFT":
-            self.left = (1 - self.alpha)*self.left + self.alpha*(reward + gamma * cell.get_max())
+            self.left = (1 - self.alpha(t))*self.left + self.alpha(t)*(reward + gamma * cell.get_max())
         elif action == "RIGHT":
-            self.right = (1 - self.alpha)*self.right + self.alpha*(reward + gamma * cell.get_max())
+            self.right = (1 - self.alpha(t))*self.right + self.alpha(t)*(reward + gamma * cell.get_max())
         else:
             return 0
 
@@ -206,6 +205,7 @@ class Qgrid:
         self.grid = []
         self.gamma = gamma
         self.sizeI, self.sizeJ=grid.shape
+        self.t = 0
 
         #Initialize cell
         for i in range(self.sizeI):
@@ -235,7 +235,8 @@ class Qgrid:
                 cellNumberState1 = x1*self.sizeJ + y1
                 cellNumberState2 = x2*self.sizeJ + y2
 
-                self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma)
+                self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma,self.t)
+                self.t = self.t+1
 
 
     def update_grid_single(self,xur,xux):
@@ -243,7 +244,8 @@ class Qgrid:
         reward,state1,u = xur
         cellNumberState1 = x1*self.sizeJ + y1
         cellNumberState2 = x2*self.sizeJ + y2
-        self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma)
+        self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma,self.t)
+        self.t = self.t+1
 
 
     def optimal_path(self):
@@ -252,6 +254,8 @@ class Qgrid:
             moves = []
             for j in range(self.sizeJ):
                 move = self.grid[i*self.sizeJ+j].best_action()
+                reward = self.grid[i*self.sizeJ+j].get_max()
+                print("J estimated position "+str(i)+" "+str(j)+" : " + str(reward))
                 path.append(move)
                 moves.append(move)
             print(moves)
@@ -265,7 +269,7 @@ class Qgrid:
     def print_grid(self):
         print("format :")
         print("cell number we read from left to right and up to down")
-        print("Qvalue of cell Left-Up-Right-Down")
+        print("Qvalue of cell Left-Up-Right-Down\n")
         for i in range(len(self.grid)):
             print("cell number :" + str(i))
             print(str(self.grid[i].left)+" "+str(self.grid[i].up)+" "+str(self.grid[i].right)+" "+str(self.grid[i].down))
@@ -291,7 +295,7 @@ class QGame:
     """
     def __init__(self,positionI,positionJ,rewards,steps,alpha, beta,epsilon, gamma):
         self.grid = rewards
-        self.qgrid=Qgrid(self.grid,gamma,alpha)
+        self.qgrid=Qgrid(self.grid,alpha,gamma)
         self.agent = AgentQ(positionI,positionJ,self.qgrid,beta, epsilon)
         self.scores = np.zeros(steps)
 
@@ -359,8 +363,8 @@ if __name__ == '__main__':
 
     size_x,size_y=array.shape
 
-    steps = 500
-    nTrajectories=100
+    steps = 1000
+    nTrajectories=1000
     policy = "RAND"
 
     gamma =  0.99
@@ -375,6 +379,9 @@ if __name__ == '__main__':
     allxur = []
     allxux = []
 
+    alpha1 = lambda t : 0.05
+    alpha2 = lambda t : pow(0.8,t)*0.05
+
     for k in range(nTrajectories):
         initialI = random.randrange(0, 5)
         initialJ = random.randrange(0, 5)
@@ -383,15 +390,17 @@ if __name__ == '__main__':
         allxur.append(game.rewardFromStateAndAction)
         allxux.append(game.state2FromState1AndAction)
 
-    Q = Qgrid(array,alpha,gamma)
+    Q = Qgrid(array,alpha1,gamma)
     Q.update_grid_trajectories(allxur,allxux)
     Q.print_grid()
     Q.optimal_path()
 
-
     #SECTION 2 :
     ##EXPERIENCE 1 :
-    ###TO DONE NORMALLY ONLY FCT CALL
 
-    qgame = QGame(0,3,array,steps,alpha,beta, epsilon, gamma)
+    qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
+    qgame.greedy_game(100,1000)
+
+    #EXPERIENCE 2 : 
+    qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
     qgame.greedy_game(100,1000)
