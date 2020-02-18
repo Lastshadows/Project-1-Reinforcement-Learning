@@ -14,7 +14,7 @@ array = np.array([
         [6, -9, 4, 19, -5],
         [-20, -17, -4, -3, 9]])
 
-steps_per_game = 50000
+steps_per_game = 1000
 discount =  0.99
 beta = 0.5
 
@@ -46,27 +46,36 @@ for i in range(size_x):
         X.append( (i,j) )
 
 # collecting all rewards and proba expectations from MDP model and from known statistical model
-MDP_rewards = []
-stat_rewards = []
+MDP_Rewards = []
+statsRewards = []
+
 MDP_proba = []
 stat_proba = []
+
 countR = 0
 countP =0
-r_diff = 0
+
+rDiff = 0
 pDiff = 0
 xAxis = []
 
+partialTrajectory = []
+
 for x in X:
     for u in U:
+        # compute the expected reward from the  infered-MDP rewards and the known stats
         MDP_r = G.reward_state_action_MDP(x,u,trajectory)
         stats_r = game.grid.compute_r_x_u(x,u,beta)
 
-        MDP_rewards.append(MDP_r)
-        stat_rewards.append(stats_r)
-        r_diff += (squared_error(MDP_r, stats_r))
+        MDP_Rewards.append(MDP_r)
+        statsRewards.append(stats_r)
+
+        # compute the suared error between the MDP infered R and the actual R
+        rDiff += (squared_error(MDP_r, stats_r))
         countR = countR + 1
 
         for x2 in X:
+            # builds a vector [0,1,2,3,...] of size X*X*U
             xAxis.append(countP)
             MDP_P =  G.proba_state1_action_state2_MDP(x,u,x2,trajectory)
             stats_P =  game.grid.compute_proba_xprime_x_u(x2, x, u, beta)
@@ -76,13 +85,13 @@ for x in X:
             pDiff += (squared_error(MDP_P, stats_P))
             countP += 1
 
-
+"""
 
 print("plot of the precision of the MDP for R \n ")
 
 fig, ax = plt.subplots()
-ax.plot(MDP_rewards, label = "MDP")
-plt.plot(stat_rewards, label = "stats")
+ax.plot(MDP_Rewards, label = "MDP")
+plt.plot(statsRewards, label = "stats")
 ax.legend()
 plt.title("R estimation,  for " + str(nb_of_games) +" games and " + str(steps_per_game) + " steps per game")
 plt.xlabel("state-action duo")
@@ -99,11 +108,14 @@ plt.xlabel("state-action-state triple")
 plt.ylabel("estimated proba")
 plt.show()
 
+"""
 
-print(" average squared error on r = " + str(r_diff/countR))
+print("for a game of length " + str(steps_per_game))
+print(" average squared error on r = " + str(rDiff/countR))
 print(" average squared error on p = " + str(pDiff/countP))
 print("")
 print("")
+
 
 
 print("computing both expected returns for each position ")
