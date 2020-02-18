@@ -324,7 +324,7 @@ class QGame:
     def get_scores(self):
         return self.scores
 
-    def greedy_game(self,n,m):
+    def greedy_game(self,n,m, buffered):
         trajectoriesXUR= []
         trajectoriesXUX= []
         #NUMBER OF EPISODES
@@ -342,17 +342,30 @@ class QGame:
                 addedTrajectoryXUX = self.agent.get_state2_state1_action()
                 addedTrajectoryXUR = self.agent.get_reward_state_action()
 
-                #print(addedTrajectoryXUR)
-                #print(addedTrajectoryXUX)
+                trajectoriesXUX.append(addedTrajectoryXUX)
+                trajectoriesXUR.append(addedTrajectoryXUR)
 
-                currentTrajectoriesXUX.append(addedTrajectoryXUX)
-                currentTrajectoriesXUR.append(addedTrajectoryXUR)
+                #currentTrajectoriesXUX.append(addedTrajectoryXUX)
+                #currentTrajectoriesXUR.append(addedTrajectoryXUR)
 
-                self.qgrid.update_grid_single(addedTrajectoryXUR,addedTrajectoryXUX)
+                # update the Q function 10 transitions at a time
+                if buffered:
+                    length = len(trajectoriesXUX)
+                    # if only 10 transitions or less, just take them all
+                    if length < 11:
+                        for i in range(length):
+                            self.qgrid.update_grid_single(trajectoriesXUR[i],trajectoriesXUX[i])
+                    else:
+                        for w in range(10):
+                            index = random.randrange(0, length)
+                            self.qgrid.update_grid_single(trajectoriesXUR[i],trajectoriesXUX[i])
+
+                else:
+                    self.qgrid.update_grid_single(addedTrajectoryXUR,addedTrajectoryXUX)
             if i < 10:
                 plt.plot(scores)
-            trajectoriesXUX.append(currentTrajectoriesXUX)
-            trajectoriesXUR.append(currentTrajectoriesXUR)
+            #trajectoriesXUX.append(currentTrajectoriesXUX)
+            #trajectoriesXUR.append(currentTrajectoriesXUR)
 
         plt.savefig('scores.png')
 
@@ -409,12 +422,12 @@ if __name__ == '__main__':
     ##EXPERIENCE 1 :
 
     qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
-    qgame.greedy_game(100,1000)
+    qgame.greedy_game(100,1000, False)
 
-    ##EXPERIENCE 2 : 
+    #EXPERIENCE 2 :
     qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
-    qgame.greedy_game(100,1000)
+    qgame.greedy_game(100,1000, False)
 
-    ##EXPERIENCE 3 :
-    qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
-    qgame.greedy_game(100,1000)
+    # EXPERIENCE 3 :
+    qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
+    qgame.greedy_game(100,1000, True)

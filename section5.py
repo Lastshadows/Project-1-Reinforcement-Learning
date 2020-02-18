@@ -16,7 +16,7 @@ array = np.array([
 
 steps_per_game = 1000
 discount =  0.99
-beta = 0.5
+beta = 0
 
 size_x,size_y=array.shape
 trajectory = []
@@ -85,7 +85,7 @@ for x in X:
             pDiff += (squared_error(MDP_P, stats_P))
             countP += 1
 
-"""
+
 
 print("plot of the precision of the MDP for R \n ")
 
@@ -108,7 +108,6 @@ plt.xlabel("state-action-state triple")
 plt.ylabel("estimated proba")
 plt.show()
 
-"""
 
 print("for a game of length " + str(steps_per_game))
 print(" average squared error on r = " + str(rDiff/countR))

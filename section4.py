@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	        [-20, -17, -4, -3, 9]])
 
 	size_x,size_y=array.shape
-	steps = 500
+	steps = 1000
 	discount =  0.99
 	beta = 0.5
 	if args.stochastic ==False:
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 	plt.figure(figsize=(20,10))
 
-
+	JN = np.ones((size_x, size_y))
 	legend = []
 	for i in range(size_x):
 		for j in range(size_y):
@@ -41,13 +41,15 @@ if __name__ == '__main__':
 				vectorScores[i][:] = vectorScores[i][:] + game.get_scores()
 
 			vectorScores[i][:] = vectorScores[i][:]/5
-			plt.plot(vectorScores[i])
 			print(' The expected return for the row '+ str(i+1)+' and column '+str(j+1)+' : ' + str(game.scores[steps - 1]))
-			legend.append("row "+str(i+1) + " column " + str(j+1))
+			JN[i][j] =  game.scores[steps - 1]
 			initialJ = initialJ + 1
 
 		initialJ = 0
 		initialI = initialI + 1
+
+	print("saving the JN")
+	np.save('J_N_for_every_state', JN)
 
 	"""
 	nb_run = 10
