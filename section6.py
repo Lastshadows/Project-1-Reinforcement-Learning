@@ -6,6 +6,15 @@ import random
 
 from game import Game
 
+
+def get_J_optimal(i,j,array,discount,steps, beta):
+    scores = 0
+    for k in range(5):
+        game = Game(i,j,array,discount,steps, beta,"Q", False)
+        game.start_game()
+        scores = scores + game.scores[steps-1]
+    return scores/5
+
 class AgentQ:
 
     """
@@ -238,7 +247,6 @@ class Qgrid:
                 self.grid[cellNumberState1].update_cell(u,reward,self.grid[cellNumberState2],self.gamma,self.t)
                 self.t = self.t+1
 
-
     def update_grid_single(self,xur,xux):
         (x2,y2),(x1,y1),u = xux
         reward,state1,u = xur
@@ -248,7 +256,7 @@ class Qgrid:
         self.t = self.t+1
 
 
-    def optimal_path(self):
+    def optimal_path(self,beta):
         path = []
         for i in range(self.sizeI):
             moves = []
@@ -256,6 +264,7 @@ class Qgrid:
                 move = self.grid[i*self.sizeJ+j].best_action()
                 reward = self.grid[i*self.sizeJ+j].get_max()
                 print("J estimated position "+str(i)+" "+str(j)+" : " + str(reward))
+                print("J optimal : " + str(get_J_optimal(i,j,self.reward,self.gamma,1000, beta)))
                 path.append(move)
                 moves.append(move)
             print(moves)
@@ -381,6 +390,7 @@ if __name__ == '__main__':
 
     alpha1 = lambda t : 0.05
     alpha2 = lambda t : pow(0.8,t)*0.05
+    print(alpha2(10))
 
     for k in range(nTrajectories):
         initialI = random.randrange(0, 5)
@@ -393,7 +403,7 @@ if __name__ == '__main__':
     Q = Qgrid(array,alpha1,gamma)
     Q.update_grid_trajectories(allxur,allxux)
     Q.print_grid()
-    Q.optimal_path()
+    Q.optimal_path(beta)
 
     #SECTION 2 :
     ##EXPERIENCE 1 :
@@ -401,6 +411,10 @@ if __name__ == '__main__':
     qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
     qgame.greedy_game(100,1000)
 
-    #EXPERIENCE 2 : 
+    ##EXPERIENCE 2 : 
     qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
+    qgame.greedy_game(100,1000)
+
+    ##EXPERIENCE 3 :
+    qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
     qgame.greedy_game(100,1000)
