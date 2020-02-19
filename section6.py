@@ -126,8 +126,6 @@ class AgentQ:
     # this score is updated by adding the relevant reward on the grid
     def receive_reward(self):
         self.score = self.score + self.qgrid.get_reward(self.positionI,self.positionJ)
-        #print(self.score)
-        #print(self.qgrid.get_reward(self.positionI,self.positionJ))
 
 
     # return the current cumulated score of the agent
@@ -237,9 +235,7 @@ class Qgrid:
         for j in range(len(trajectoriesXUX)):
             i = 0
             for reward,state1,action in trajectoriesXUR[j]:
-                #print(trajectoriesXUX[j][i])
                 (x2,y2),(x1,y1),u = trajectoriesXUX[j][i]
-                #print(reward)
                 i = i+1
                 cellNumberState1 = x1*self.sizeJ + y1
                 cellNumberState2 = x2*self.sizeJ + y2
@@ -257,17 +253,10 @@ class Qgrid:
 
 
     def optimal_path(self,beta):
-        path = []
         for i in range(self.sizeI):
-            moves = []
             for j in range(self.sizeJ):
-                move = self.grid[i*self.sizeJ+j].best_action()
                 reward = self.grid[i*self.sizeJ+j].get_max()
                 print("J estimated position "+str(i)+" "+str(j)+" : " + str(reward))
-                print("J optimal : " + str(get_J_optimal(i,j,self.reward,self.gamma,1000, beta)))
-                path.append(move)
-                moves.append(move)
-            print(moves)
             print("\n")
 
     def get_reward(self,i,j):
@@ -308,6 +297,8 @@ class QGame:
         self.agent = AgentQ(positionI,positionJ,self.qgrid,beta, epsilon)
         self.scores = np.zeros(steps)
 
+
+        self.ref = get_J_optimal(positionI,positionJ,rewards,gamma,steps, beta)
         self.initialI = positionI
         self.initialJ = positionJ
 
@@ -328,15 +319,14 @@ class QGame:
         trajectoriesXUR= []
         trajectoriesXUX= []
         #NUMBER OF EPISODES
+        scores = np.zeros((n,m))
         for i in range(n):
             self.agent.reset(self.initialI,self.initialJ)
             currentTrajectoriesXUX = []
             currentTrajectoriesXUR = []
-            scores = np.zeros(m)
             #A TRAJECTORY OF m TRANSITIONS
             for j in range(m):
 
-                scores[j]=self.agent.get_score()
                 self.agent.update_agent()
 
                 addedTrajectoryXUX = self.agent.get_state2_state1_action()
@@ -362,18 +352,20 @@ class QGame:
 
                 else:
                     self.qgrid.update_grid_single(addedTrajectoryXUR,addedTrajectoryXUX)
-            if i < 10:
-                plt.plot(scores)
-            #trajectoriesXUX.append(currentTrajectoriesXUX)
-            #trajectoriesXUR.append(currentTrajectoriesXUR)
+                reward = abs(self.qgrid.grid[self.initialI*self.qgrid.sizeJ+self.initialJ].get_max() - self.ref)
+                scores[i][j]=reward
+                print("Difference |J-Q| : "+str(reward))
 
-        plt.savefig('scores.png')
+        #plt.plot(scores)
+        #plt.savefig("scoresss.jpg")
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--stochastic",help="Add stochasticity to the program",action="store_true")
+    parser.add_argument("--gamma",type = str,
+        help="chose a value for gamma, DEFAULT = 0.99")
     args = parser.parse_args()
 
     array = np.array([
@@ -389,7 +381,12 @@ if __name__ == '__main__':
     nTrajectories=1000
     policy = "RAND"
 
-    gamma =  0.99
+
+    if args.gamma == True :
+        gamma = args.gamma
+    else:
+        gamma =  0.99
+
     beta = 0.5
     alpha = 0.05
     epsilon = 0.25
@@ -403,7 +400,6 @@ if __name__ == '__main__':
 
     alpha1 = lambda t : 0.05
     alpha2 = lambda t : pow(0.8,t)*0.05
-    print(alpha2(10))
 
     for k in range(nTrajectories):
         initialI = random.randrange(0, 5)
@@ -413,21 +409,29 @@ if __name__ == '__main__':
         allxur.append(game.rewardFromStateAndAction)
         allxux.append(game.state2FromState1AndAction)
 
+    for i in range(5):
+        for j in range(5):
+            print("Optimal Policy for position ("+str(i)+','+str(j)+"): "+str(get_J_optimal(i,j,array,gamma,steps, beta)))
+
+
+    print("####section 6.1####")
     Q = Qgrid(array,alpha1,gamma)
     Q.update_grid_trajectories(allxur,allxux)
-    Q.print_grid()
     Q.optimal_path(beta)
 
     #SECTION 2 :
     ##EXPERIENCE 1 :
-
+    print("####section 6.2####")
+    print("EXPERIENCE 1")
     qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
     qgame.greedy_game(100,1000, False)
 
     #EXPERIENCE 2 :
+    print("EXPERIENCE 2")
     qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
     qgame.greedy_game(100,1000, False)
-
+    
     # EXPERIENCE 3 :
-    qgame = QGame(0,3,array,steps,alpha2,beta, epsilon, gamma)
+    print("EXPERIENCE 3")
+    qgame = QGame(0,3,array,steps,alpha1,beta, epsilon, gamma)
     qgame.greedy_game(100,1000, True)
